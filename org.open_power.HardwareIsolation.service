@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenPOWER Host HardwareIsolation
+Wants=mapper-wait@-xyz-openbmc_project-inventory.service
+After=mapper-wait@-xyz-openbmc_project-inventory.service
+Wants=pldmd.service
+After=pldmd.service
+
+[Service]
+ExecStart=/usr/bin/env openpower-hw-isolation
+SyslogIdentifier=openpower-hw-isolation
+Restart=always
+Type=dbus
+BusName={BUSNAME}
+
+[Install]
+WantedBy=multi-user.target
