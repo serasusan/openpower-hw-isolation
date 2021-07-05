@@ -138,5 +138,15 @@ void setDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
             const_cast<sd_bus_error*>(e.get_error()), "HW-Isolation");
     }
 }
+
+/**
+ * @brief Used to get to know whether hardware deisolation is allowed
+ *
+ * @param[in] bus - Bus to attach to.
+ *
+ * @return False if not allowed else True
+ */
+bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus);
+
 } // namespace utils
 } // namespace hw_isolation

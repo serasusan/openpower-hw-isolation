@@ -5,6 +5,8 @@
 #include "openpower_guard_interface.hpp"
 #include "phal_devtree_utils.hpp"
 
+#include <xyz/openbmc_project/State/Chassis/server.hpp>
+
 namespace hw_isolation
 {
 namespace utils
@@ -71,6 +73,25 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
     }
 
     return servicesName[0].first;
+}
+
+bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
+{
+    using Chassis = sdbusplus::xyz::openbmc_project::State::server::Chassis;
+
+    auto systemPowerState = utils::getDBusPropertyVal<std::string>(
+        bus, "/xyz/openbmc_project/state/chassis0",
+        "xyz.openbmc_project.State.Chassis", "CurrentPowerState");
+
+    if (Chassis::convertPowerStateFromString(systemPowerState) !=
+        Chassis::PowerState::Off)
+    {
+        log<level::ERR>(fmt::format("Manual hardware de-isolation is allowed "
+                                    "only when chassis powerstate is off")
+                            .c_str());
+        return false;
+    }
+    return true;
 }
 
 } // namespace utils
