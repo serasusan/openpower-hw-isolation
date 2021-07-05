@@ -89,6 +89,7 @@ class Entry :
 
 namespace utils
 {
+
 /**
  * @brief Helper function to get EntrySeverity based on
  *        the given GardType
@@ -103,6 +104,22 @@ namespace utils
  */
 std::optional<EntrySeverity>
     getEntrySeverityType(const openpower_guard::GardType gardType);
+
+/**
+ * @breif Helper function to get the GardType based on
+ *        the given EntrySeverity
+ *
+ * @param[in] severity hardware isloation entry severity
+ *
+ * @return GardType on success
+ *         Empty optional on failure
+ *
+ * @note This function will return GardType::GARD_Predictive
+ * if the given EntrySeverity is not found in conversion switch block
+ *
+ */
+std::optional<openpower_guard::GardType>
+    getGuardType(const EntrySeverity severity);
 
 } // namespace utils
 } // namespace entry
