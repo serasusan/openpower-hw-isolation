@@ -13,6 +13,7 @@ project('hardware_isolation', 'cpp', 'c',
 
 # openbmc dependency packages list
 format = dependency('fmt')
+libdtapi = dependency('libdt-api')
 libpdbg = meson.get_compiler('c').find_library('libpdbg')
 phosphor_dbus_interfaces = dependency('phosphor-dbus-interfaces')
 phosphor_logging = dependency('phosphor-logging')
@@ -48,6 +49,7 @@ hardware_isolation_sources = [
 
 hardware_isolation_dependencies = [
         format,
+        libdtapi,
         libpdbg,
         phosphor_dbus_interfaces,
         phosphor_logging,
