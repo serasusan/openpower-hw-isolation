@@ -22,8 +22,9 @@ using namespace phosphor::logging;
 namespace fs = std::filesystem;
 
 Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath) :
-    type::ServerObject<CreateInterface>(bus, objPath.c_str(), true), _bus(bus),
-    _lastEntryId(0), _isolatableHWs(bus)
+    type::ServerObject<CreateInterface, DeleteAllInterface>(
+        bus, objPath.c_str(), true),
+    _bus(bus), _lastEntryId(0), _isolatableHWs(bus)
 {}
 
 std::optional<uint32_t>
@@ -267,6 +268,34 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
         throw type::CommonError::InternalFailure();
     }
     return *entryPath;
+}
+
+void Manager::deleteAll()
+{
+    if (!hw_isolation::utils::isHwDeisolationAllowed(_bus))
+    {
+        throw type::CommonError::NotAllowed();
+    }
+
+    auto entryIt = _isolatedHardwares.begin();
+    while (entryIt != _isolatedHardwares.end())
+    {
+        auto entryId = entryIt->first;
+        auto& entry = entryIt->second;
+        std::advance(entryIt, 1);
+
+        // Continue other entries to delete if failed to delete one entry
+        try
+        {
+            entry->delete_();
+        }
+        catch (std::exception& e)
+        {
+            log<level::ERR>(fmt::format("Exception [{}] to delete entry [{}]",
+                                        e.what(), entryId)
+                                .c_str());
+        }
+    }
 }
 
 } // namespace hw_isolation
