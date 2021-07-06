@@ -53,6 +53,7 @@ hardware_isolation_sources = [
         'openpower_guard_interface.cpp',
         'phal_devtree_utils.cpp',
         'utils.cpp',
+        'watch.cpp'
     ]
 
 hardware_isolation_dependencies = [
