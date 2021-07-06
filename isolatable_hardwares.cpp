@@ -347,5 +347,48 @@ std::optional<struct pdbg_target*>
     return parentFruTarget;
 }
 
+std::optional<std::vector<sdbusplus::message::object_path>>
+    IsolatableHWs::getChildsInventoryPath(
+        const sdbusplus::message::object_path& parentObjPath,
+        const std::string& interfaceName)
+{
+    std::vector<sdbusplus::message::object_path> listOfChildsInventoryPath;
+
+    try
+    {
+        auto dbusServiceName = utils::getDBusServiceName(
+            _bus, type::ObjectMapperPath, type::ObjectMapperName);
+
+        auto method = _bus.new_method_call(
+            dbusServiceName.c_str(), type::ObjectMapperPath,
+            type::ObjectMapperName, "GetSubTreePaths");
+
+        std::vector<std::string> listOfIfaces{interfaceName};
+
+        method.append(parentObjPath.str, 0, listOfIfaces);
+
+        auto resp = _bus.call(method);
+
+        std::vector<std::string> recvPaths;
+        resp.read(recvPaths);
+
+        std::for_each(recvPaths.begin(), recvPaths.end(),
+                      [&listOfChildsInventoryPath](const auto& ele) {
+                          listOfChildsInventoryPath.push_back(
+                              sdbusplus::message::object_path(ele));
+                      });
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        log<level::ERR>(
+            fmt::format("Exception [{}] to get childs inventory path "
+                        "for given objPath[{}] interface[{}]",
+                        e.what(), parentObjPath.str, interfaceName)
+                .c_str());
+        return std::nullopt;
+    }
+    return listOfChildsInventoryPath;
+}
+
 } // namespace isolatable_hws
 } // namespace hw_isolation
