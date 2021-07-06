@@ -284,5 +284,44 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
     }
 }
 
+std::optional<std::vector<sdbusplus::message::object_path>>
+    IsolatableHWs::getInventoryPathsByLocCode(
+        const LocationCode& unexpandedLocCode)
+{
+    constexpr auto vpdMgrObjPath = "/com/ibm/VPD/Manager";
+    constexpr auto vpdInterface = "com.ibm.VPD.Manager";
+
+    std::vector<sdbusplus::message::object_path> listOfInventoryObjPaths;
+
+    try
+    {
+        // FIXME: Use mapper to get dbus name instad of hardcode like below
+        //        but, mapper failing when using "com.ibm.VPD" dbus tree.
+        std::string dbusServiceName{"com.ibm.VPD.Manager"};
+
+        auto method = _bus.new_method_call(dbusServiceName.c_str(),
+                                           vpdMgrObjPath, vpdInterface,
+                                           "GetFRUsByUnexpandedLocationCode");
+
+        // passing 0 as node number
+        // FIXME if enabled multi node system
+        method.append(unexpandedLocCode, static_cast<uint16_t>(0));
+
+        auto resp = _bus.call(method);
+
+        resp.read(listOfInventoryObjPaths);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        log<level::ERR>(fmt::format("Exception [{}] to get inventory path for "
+                                    "the given locationc code [{}]",
+                                    e.what(), unexpandedLocCode)
+                            .c_str());
+        return std::nullopt;
+    }
+
+    return listOfInventoryObjPaths;
+}
+
 } // namespace isolatable_hws
 } // namespace hw_isolation
