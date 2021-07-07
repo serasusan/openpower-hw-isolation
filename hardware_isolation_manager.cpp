@@ -111,7 +111,8 @@ void Manager::setAvailableProperty(const std::string& dbusObjPath,
 std::optional<sdbusplus::message::object_path> Manager::createEntry(
     const entry::EntryRecordId& recordId, const entry::EntryResolved& resolved,
     const entry::EntrySeverity& severity, const std::string& isolatedHardware,
-    const std::string& bmcErrorLog, const bool deleteRecord)
+    const std::string& bmcErrorLog, const bool deleteRecord,
+    const openpower_guard::EntityPath& entityPath)
 {
     try
     {
@@ -138,10 +139,10 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
                 bmcErrorLogFwdType, bmcErrorLogRevType, bmcErrorLog));
         }
 
-        _isolatedHardwares.insert(std::make_pair(
-            id, std::make_unique<entry::Entry>(_bus, entryObjPath, id, recordId,
-                                               severity, resolved,
-                                               associationDeftoHw)));
+        _isolatedHardwares.insert(
+            std::make_pair(id, std::make_unique<entry::Entry>(
+                                   _bus, entryObjPath, id, recordId, severity,
+                                   resolved, associationDeftoHw, entityPath)));
 
         setAvailableProperty(isolatedHardware, false);
 
@@ -213,8 +214,9 @@ sdbusplus::message::object_path Manager::create(
     auto guardRecord =
         openpower_guard::create(devTreePhysicalPath->data(), 0, *guardType);
 
-    auto entryPath = createEntry(guardRecord->recordId, false, severity,
-                                 isolateHardware.str, "", true);
+    auto entryPath =
+        createEntry(guardRecord->recordId, false, severity, isolateHardware.str,
+                    "", true, guardRecord->targetId);
 
     if (!entryPath.has_value())
     {
@@ -262,8 +264,9 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
     auto guardRecord =
         openpower_guard::create(devTreePhysicalPath->data(), *eId, *guardType);
 
-    auto entryPath = createEntry(guardRecord->recordId, false, severity,
-                                 isolateHardware.str, bmcErrorLog.str, true);
+    auto entryPath =
+        createEntry(guardRecord->recordId, false, severity, isolateHardware.str,
+                    bmcErrorLog.str, true, guardRecord->targetId);
 
     if (!entryPath.has_value())
     {
@@ -399,9 +402,10 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record)
             return;
         }
 
-        auto entryPath = createEntry(record.recordId, resolved, *entrySeverity,
-                                     isolatedHwInventoryPath->str,
-                                     bmcErrorLogPath->str, false);
+        auto entryPath =
+            createEntry(record.recordId, resolved, *entrySeverity,
+                        isolatedHwInventoryPath->str, bmcErrorLogPath->str,
+                        false, record.targetId);
 
         if (!entryPath.has_value())
         {

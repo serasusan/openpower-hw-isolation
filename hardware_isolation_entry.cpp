@@ -21,10 +21,12 @@ Entry::Entry(sdbusplus::bus::bus& bus, const std::string& objPath,
              const EntryId entryId, const EntryRecordId entryRecordId,
              const EntrySeverity isolatedHwSeverity,
              const EntryResolved entryIsResolved,
-             const AssociationDef& associationDef) :
+             const AssociationDef& associationDef,
+             const openpower_guard::EntityPath& entityPath) :
     type::ServerObject<EntryInterface, AssociationDefInterface, EpochTime,
                        DeleteInterface>(bus, objPath.c_str(), true),
-    _bus(bus), _entryId(entryId), _entryRecordId(entryRecordId)
+    _bus(bus), _entryId(entryId), _entryRecordId(entryRecordId),
+    _entityPath(entityPath)
 {
     // Setting properties which are defined in EntryInterface
     severity(isolatedHwSeverity);
@@ -52,6 +54,11 @@ void Entry::delete_()
         openpower_guard::clear(_entryRecordId);
         resolved(true);
     }
+}
+
+openpower_guard::EntityPath Entry::getEntityPath() const
+{
+    return _entityPath;
 }
 
 namespace utils

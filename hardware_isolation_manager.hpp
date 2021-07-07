@@ -155,6 +155,7 @@ class Manager : public type::ServerObject<CreateInterface, DeleteAllInterface>
      * @param[in] bmcErrorLog - The error log which caused the hardware
      *                          isolation
      * @param[in] deleteRecord - delete record if failed to create entry
+     * @param[in] entityPath - the isolated hardware entity path
      *
      * @return entry object path on success
      *         Empty optional on failure
@@ -164,7 +165,8 @@ class Manager : public type::ServerObject<CreateInterface, DeleteAllInterface>
                     const entry::EntryResolved& resolved,
                     const entry::EntrySeverity& severity,
                     const std::string& isolatedHardware,
-                    const std::string& bmcErrorLog, const bool deleteRecord);
+                    const std::string& bmcErrorLog, const bool deleteRecord,
+                    const openpower_guard::EntityPath& entityPath);
 
     /**
      * @brief Used to get to know whether hardware isolation is allowed
