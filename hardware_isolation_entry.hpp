@@ -94,6 +94,11 @@ class Entry :
      */
     openpower_guard::EntityPath getEntityPath() const;
 
+    /**
+     * @brief Used get the record id of isolated hardware.
+     */
+    EntryRecordId getEntryRecId() const;
+
   private:
     /** @brief Attached bus connection */
     sdbusplus::bus::bus& _bus;
