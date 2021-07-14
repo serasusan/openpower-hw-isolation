@@ -27,7 +27,7 @@ constexpr auto loggingInterface = "org.open_power.Logging.PEL";
 
 Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
                  const sd_event* eventLoop) :
-    type::ServerObject<CreateInterface, DeleteAllInterface>(
+    type::ServerObject<CreateInterface, OP_CreateInterface, DeleteAllInterface>(
         bus, objPath.c_str(), true),
     _bus(bus), _lastEntryId(0), _isolatableHWs(bus),
     _guardFileWatch(
@@ -494,6 +494,60 @@ void Manager::handleHostIsolatedHardwares()
             isolatedHwIt->second->resolved(true);
         }
     });
+}
+
+sdbusplus::message::object_path Manager::createWithEntityPath(
+    std::vector<uint8_t> entityPath,
+    sdbusplus::xyz::openbmc_project::HardwareIsolation::server::Entry::Type
+        severity,
+    sdbusplus::message::object_path bmcErrorLog)
+{
+    isHwIsolationAllowed(severity);
+
+    auto isolateHwInventoryPath = _isolatableHWs.getInventoryPath(entityPath);
+    std::stringstream ss;
+    std::for_each(entityPath.begin(), entityPath.end(), [&ss](const auto& ele) {
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
+    });
+    if (!isolateHwInventoryPath.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Invalid argument [IsolateHardware: {}]", ss.str())
+                .c_str());
+        throw type::CommonError::InvalidArgument();
+    }
+
+    auto eId = getEID(bmcErrorLog);
+    if (!eId.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
+                .c_str());
+        throw type::CommonError::InvalidArgument();
+    }
+
+    auto guardType = entry::utils::getGuardType(severity);
+    if (!guardType.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Invalid argument [Severity: {}]",
+                        entry::EntryInterface::convertTypeToString(severity))
+                .c_str());
+        throw type::CommonError::InvalidArgument();
+    }
+
+    auto guardRecord =
+        openpower_guard::create(entityPath.data(), *eId, *guardType);
+
+    auto entryPath = createEntry(guardRecord->recordId, false, severity,
+                                 isolateHwInventoryPath->str, bmcErrorLog.str,
+                                 true, guardRecord->targetId);
+
+    if (!entryPath.has_value())
+    {
+        throw type::CommonError::InternalFailure();
+    }
+    return *entryPath;
 }
 
 } // namespace hw_isolation
