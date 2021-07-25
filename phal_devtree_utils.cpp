@@ -253,14 +253,28 @@ InstanceId getHwInstIdFromDevTree(struct pdbg_target* devTreeTgt)
     // Given hardware unit is packaged inside chiplet
     if (isChipletUnit)
     {
-        ATTR_CHIP_UNIT_POS_Type devTreeChipUnitPos;
-        if (DT_GET_PROP(ATTR_CHIP_UNIT_POS, devTreeTgt, devTreeChipUnitPos))
+        /**
+         * FIXME: FC target does not contain ATTR_CHIP_UNIT_POS attribute
+         *        since it is logical unit and pub-ekb attribute xml file
+         *        does not have TARGET_TYPE_FC for ATTR_CHIP_UNIT_POS.
+         *        so using pdbg index until it get added into phal
+         *        device tree.
+         */
+        if (std::string(pdbg_target_class_name(devTreeTgt)) == "fc")
         {
-            throw std::runtime_error(
-                std::string("Failed to get ATTR_CHIP_UNIT_POS from ") +
-                pdbg_target_path(devTreeTgt));
+            instanceId = pdbg_target_index(devTreeTgt);
         }
-        instanceId = devTreeChipUnitPos;
+        else
+        {
+            ATTR_CHIP_UNIT_POS_Type devTreeChipUnitPos;
+            if (DT_GET_PROP(ATTR_CHIP_UNIT_POS, devTreeTgt, devTreeChipUnitPos))
+            {
+                throw std::runtime_error(
+                    std::string("Failed to get ATTR_CHIP_UNIT_POS from ") +
+                    pdbg_target_path(devTreeTgt));
+            }
+            instanceId = devTreeChipUnitPos;
+        }
     }
     else
     {
