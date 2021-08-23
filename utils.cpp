@@ -73,8 +73,23 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
     return servicesName[0].first;
 }
 
+bool isHwIosolationPolicyEnabled(sdbusplus::bus::bus& bus)
+{
+    return utils::getDBusPropertyVal<bool>(
+        bus, "/xyz/openbmc_project/hardware_isolation/hw_isolation_policy",
+        "xyz.openbmc_project.Object.Enable", "Enabled");
+}
+
 bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
 {
+    // Make sure policy is enabled or not
+    if (isHwIosolationPolicyEnabled(bus))
+    {
+        log<level::ERR>(
+            fmt::format("HardwareIsolation policy is enabled").c_str());
+        return false;
+    }
+
     using Chassis = sdbusplus::xyz::openbmc_project::State::server::Chassis;
 
     auto systemPowerState = utils::getDBusPropertyVal<std::string>(

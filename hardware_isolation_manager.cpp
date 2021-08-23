@@ -173,6 +173,14 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
 
 void Manager::isHwIsolationAllowed(const entry::EntrySeverity& severity)
 {
+    // Make sure policy is enabled or not
+    if (utils::isHwIosolationPolicyEnabled(_bus))
+    {
+        log<level::ERR>(
+            fmt::format("HardwareIsolation policy is enabled").c_str());
+        throw type::CommonError::NotAllowed();
+    }
+
     if (severity == entry::EntrySeverity::Manual)
     {
         using Chassis = sdbusplus::xyz::openbmc_project::State::server::Chassis;
