@@ -53,6 +53,15 @@ void Entry::delete_()
 
         openpower_guard::clear(_entryRecordId);
         resolved(true);
+        for (auto& assoc : associations())
+        {
+            if (std::get<0>(assoc) == "isolated_hw")
+            {
+                hw_isolation::utils::setAvailableProperty(
+                    _bus, std::get<2>(assoc), true);
+                break;
+            }
+        }
     }
 }
 
