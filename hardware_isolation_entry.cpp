@@ -57,7 +57,7 @@ void Entry::delete_()
         {
             if (std::get<0>(assoc) == "isolated_hw")
             {
-                hw_isolation::utils::setAvailableProperty(
+                hw_isolation::utils::setEnabledProperty(
                     _bus, std::get<2>(assoc), true);
                 break;
             }

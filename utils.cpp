@@ -107,24 +107,23 @@ bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
     return true;
 }
 
-void setAvailableProperty(sdbusplus::bus::bus& bus,
-                          const std::string& dbusObjPath, bool availablePropVal)
+void setEnabledProperty(sdbusplus::bus::bus& bus,
+                        const std::string& dbusObjPath, bool enabledPropVal)
 {
     /**
-     * Make sure "Availability" interface is implemented for the given
+     * Make sure "Object::Enable" interface is implemented for the given
      * dbus object path and don't throw an exception if the interface or
-     * property "Available" is not implemented since "Available" property
+     * property "Enabled" is not implemented since "Enabled" property
      * update requires only for few hardware which are going isolate from
      * external interface i.e Redfish
      */
-    constexpr auto availabilityIface =
-        "xyz.openbmc_project.State.Decorator.Availability";
+    constexpr auto enabledPropIface = "xyz.openbmc_project.Object.Enable";
 
     // Using two try and catch block to avoid more trace for same issue
     // since using common utils API "setDBusPropertyVal"
     try
     {
-        getDBusServiceName(bus, dbusObjPath, availabilityIface);
+        getDBusServiceName(bus, dbusObjPath, enabledPropIface);
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
@@ -139,8 +138,8 @@ void setAvailableProperty(sdbusplus::bus::bus& bus,
 
     try
     {
-        setDBusPropertyVal<bool>(bus, dbusObjPath, availabilityIface,
-                                 "Available", availablePropVal);
+        setDBusPropertyVal<bool>(bus, dbusObjPath, enabledPropIface, "Enabled",
+                                 enabledPropVal);
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {

@@ -159,23 +159,22 @@ bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus);
 bool isHwIosolationPolicyEnabled(sdbusplus::bus::bus& bus);
 
 /**
- * @brief Used to set the Available property value by using given
+ * @brief Used to set the Enabled property value by using the given
  *        dbus object path
  *
  * @param[in] bus - Bus to attach to.
- * @param[in] dbusObjPath - The object path to set available property value
- * @param[in] availablePropVal - set the available property value
+ * @param[in] dbusObjPath - The object path to set enabled property value
+ * @param[in] enabledPropVal - set the enabled property value
  *
  * @return NULL on success
  *         Throw exception on failure
  *
- * @note It will set available property value if found the available
+ * @note It will set enabled property value if found the enabled
  *       property in the given object path. If not found then it will just
  *       add the trace and won't throw exception.
  */
-void setAvailableProperty(sdbusplus::bus::bus& bus,
-                          const std::string& dbusObjPath,
-                          bool availablePropVal);
+void setEnabledProperty(sdbusplus::bus::bus& bus,
+                        const std::string& dbusObjPath, bool enabledPropVal);
 
 } // namespace utils
 } // namespace hw_isolation

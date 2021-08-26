@@ -104,7 +104,7 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
                                    _bus, entryObjPath, id, recordId, severity,
                                    resolved, associationDeftoHw, entityPath)));
 
-        utils::setAvailableProperty(_bus, isolatedHardware, false);
+        utils::setEnabledProperty(_bus, isolatedHardware, false);
 
         // Update the last entry id by using the created entry id.
         _lastEntryId = id;
