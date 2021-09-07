@@ -126,11 +126,13 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
 
 void Manager::isHwIsolationAllowed(const entry::EntrySeverity& severity)
 {
-    // Make sure policy is enabled or not
-    if (utils::isHwIosolationPolicyEnabled(_bus))
+    // Make sure the hardware isolation setting is enabled or not
+    if (!utils::isHwIosolationSettingEnabled(_bus))
     {
-        log<level::ERR>(
-            fmt::format("HardwareIsolation policy is enabled").c_str());
+        log<level::INFO>(
+            fmt::format("Hardware isolation is not allowed "
+                        "since the HardwareIsolation setting is disabled")
+                .c_str());
         throw type::CommonError::NotAllowed();
     }
 

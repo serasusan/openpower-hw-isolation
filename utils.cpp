@@ -73,20 +73,31 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
     return servicesName[0].first;
 }
 
-bool isHwIosolationPolicyEnabled(sdbusplus::bus::bus& bus)
+bool isHwIosolationSettingEnabled(sdbusplus::bus::bus& bus)
 {
-    return utils::getDBusPropertyVal<bool>(
-        bus, "/xyz/openbmc_project/hardware_isolation/hw_isolation_policy",
-        "xyz.openbmc_project.Object.Enable", "Enabled");
+    try
+    {
+        return utils::getDBusPropertyVal<bool>(
+            bus, "/xyz/openbmc_project/hardware_isolation/allow_hw_isolation",
+            "xyz.openbmc_project.Object.Enable", "Enabled");
+    }
+    catch (const std::exception& e)
+    {
+        // Log is already added in getDBusPropertyVal()
+        // By default, the HardwareIsolation feature is need to allow
+        return true;
+    }
 }
 
 bool isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
 {
-    // Make sure policy is enabled or not
-    if (isHwIosolationPolicyEnabled(bus))
+    // Make sure the hardware isolation setting is enabled or not
+    if (!isHwIosolationSettingEnabled(bus))
     {
-        log<level::ERR>(
-            fmt::format("HardwareIsolation policy is enabled").c_str());
+        log<level::INFO>(
+            fmt::format("Hardware deisolation is not allowed "
+                        "since the HardwareIsolation setting is disabled")
+                .c_str());
         return false;
     }
 
