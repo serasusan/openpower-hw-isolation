@@ -2,10 +2,10 @@
 
 #include "config.h"
 
-#include "hardware_isolation_manager.hpp"
+#include "hw_isolation_record/manager.hpp"
 
-#include "common_types.hpp"
-#include "utils.hpp"
+#include "common/common_types.hpp"
+#include "common/utils.hpp"
 
 #include <fmt/format.h>
 

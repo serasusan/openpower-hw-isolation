@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "openpower_guard_interface.hpp"
+#include "hw_isolation_record/openpower_guard_interface.hpp"
 
-#include "common_types.hpp"
+#include "common/common_types.hpp"
 
 #include <fmt/format.h>
 

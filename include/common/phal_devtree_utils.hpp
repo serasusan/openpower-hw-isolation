@@ -7,8 +7,8 @@ extern "C"
 #include <libpdbg.h>
 }
 
-#include "common_types.hpp"
-#include "openpower_guard_interface.hpp"
+#include "common/common_types.hpp"
+#include "hw_isolation_record/openpower_guard_interface.hpp"
 
 #include <functional>
 #include <optional>

@@ -2,8 +2,8 @@
 
 #include "config.h"
 
-#include "hardware_isolation_manager.hpp"
-#include "utils.hpp"
+#include "common/utils.hpp"
+#include "hw_isolation_record/manager.hpp"
 
 #include <fmt/format.h>
 

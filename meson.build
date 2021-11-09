@@ -46,14 +46,14 @@ configure_file(configuration : conf_data,
               )
 
 hardware_isolation_sources = [
-        'hardware_isolation_entry.cpp',
-        'hardware_isolation_manager.cpp',
-        'hardware_isolation_manager_main.cpp',
-        'isolatable_hardwares.cpp',
-        'openpower_guard_interface.cpp',
-        'phal_devtree_utils.cpp',
-        'utils.cpp',
-        'watch.cpp'
+        'src/hardware_isolation_main.cpp',
+        'src/common/isolatable_hardwares.cpp',
+        'src/common/phal_devtree_utils.cpp',
+        'src/common/utils.cpp',
+        'src/common/watch.cpp',
+        'src/hw_isolation_record/entry.cpp',
+        'src/hw_isolation_record/manager.cpp',
+        'src/hw_isolation_record/openpower_guard_interface.cpp'
     ]
 
 hardware_isolation_dependencies = [
@@ -67,16 +67,19 @@ hardware_isolation_dependencies = [
         sdeventplus
     ]
 
+root_inc_dir = include_directories('include')
+
 executable('openpower-hw-isolation',
            hardware_isolation_sources,
            dependencies: hardware_isolation_dependencies,
+           include_directories: root_inc_dir,
            install : true
           )
 
 systemd_system_unit_dir = dependency('systemd').get_variable(
     pkgconfig: 'systemdsystemunitdir')
 
-hw_isolation_service_unit = 'org.open_power.HardwareIsolation.service'
+hw_isolation_service_unit = 'service_files/org.open_power.HardwareIsolation.service'
 configure_file(
     configuration: {
         'BUSNAME' : get_option('HW_ISOLATION_BUSNAME'),
@@ -84,5 +87,5 @@ configure_file(
     input: hw_isolation_service_unit,
     install : true,
     install_dir: systemd_system_unit_dir,
-    output: hw_isolation_service_unit
+    output: '@PLAINNAME@'
     )

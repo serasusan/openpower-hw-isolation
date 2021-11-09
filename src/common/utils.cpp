@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "utils.hpp"
+#include "common/utils.hpp"
 
-#include "openpower_guard_interface.hpp"
-#include "phal_devtree_utils.hpp"
+#include "common/phal_devtree_utils.hpp"
 
 #include <xyz/openbmc_project/State/Chassis/server.hpp>
 
