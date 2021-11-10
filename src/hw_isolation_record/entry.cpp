@@ -12,6 +12,8 @@
 
 namespace hw_isolation
 {
+namespace record
+{
 namespace entry
 {
 
@@ -127,4 +129,5 @@ std::optional<openpower_guard::GardType>
 
 } // namespace utils
 } // namespace entry
+} // namespace record
 } // namespace hw_isolation

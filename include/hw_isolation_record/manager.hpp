@@ -13,6 +13,8 @@
 
 namespace hw_isolation
 {
+namespace record
+{
 
 using CreateInterface =
     sdbusplus::xyz::openbmc_project::HardwareIsolation::server::Create;
@@ -226,4 +228,5 @@ class Manager :
     void createEntryForRecord(const openpower_guard::GuardRecord& record);
 };
 
+} // namespace record
 } // namespace hw_isolation

@@ -18,6 +18,8 @@
 
 namespace hw_isolation
 {
+namespace record
+{
 
 using namespace phosphor::logging;
 namespace fs = std::filesystem;
@@ -34,7 +36,8 @@ Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
         eventLoop, IN_NONBLOCK, IN_CLOSE_WRITE, EPOLLIN,
         openpower_guard::getGuardFilePath(),
         std::bind(
-            std::mem_fn(&hw_isolation::Manager::handleHostIsolatedHardwares),
+            std::mem_fn(
+                &hw_isolation::record::Manager::handleHostIsolatedHardwares),
             this))
 {}
 
@@ -513,4 +516,5 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     return *entryPath;
 }
 
+} // namespace record
 } // namespace hw_isolation
