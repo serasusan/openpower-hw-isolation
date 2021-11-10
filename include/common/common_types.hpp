@@ -6,6 +6,7 @@
 #include <xyz/openbmc_project/Common/error.hpp>
 
 #include <string>
+#include <vector>
 
 namespace hw_isolation
 {
@@ -17,6 +18,11 @@ using ServerObject = typename sdbusplus::server::object::object<T...>;
 
 using InstanceId = uint32_t;
 using LocationCode = std::string;
+using AsscDefFwdType = std::string;
+using AsscDefRevType = std::string;
+using AssociatedObjPat = std::string;
+using AssociationDef =
+    std::vector<std::tuple<AsscDefFwdType, AsscDefRevType, AssociatedObjPat>>;
 
 namespace CommonError = sdbusplus::xyz::openbmc_project::Common::Error;
 

@@ -87,17 +87,17 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
         // Note: Association forward and reverse type are defined as per
         // hardware isolation design document (aka guard) and hardware isolation
         // entry dbus interface document for hardware and error object path
-        entry::AsscDefFwdType isolateHwFwdType("isolated_hw");
-        entry::AsscDefRevType isolatedHwRevType("isolated_hw_entry");
-        entry::AssociationDef associationDeftoHw;
+        type::AsscDefFwdType isolateHwFwdType("isolated_hw");
+        type::AsscDefRevType isolatedHwRevType("isolated_hw_entry");
+        type::AssociationDef associationDeftoHw;
         associationDeftoHw.push_back(std::make_tuple(
             isolateHwFwdType, isolatedHwRevType, isolatedHardware));
 
         // Add errog log as Association if given
         if (!bmcErrorLog.empty())
         {
-            entry::AsscDefFwdType bmcErrorLogFwdType("isolated_hw_errorlog");
-            entry::AsscDefRevType bmcErrorLogRevType("isolated_hw_entry");
+            type::AsscDefFwdType bmcErrorLogFwdType("isolated_hw_errorlog");
+            type::AsscDefRevType bmcErrorLogRevType("isolated_hw_entry");
             associationDeftoHw.push_back(std::make_tuple(
                 bmcErrorLogFwdType, bmcErrorLogRevType, bmcErrorLog));
         }
