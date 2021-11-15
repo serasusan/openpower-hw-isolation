@@ -9,7 +9,7 @@ extern "C"
 
 #include "attributes_info.H"
 
-#include "phal_devtree_utils.hpp"
+#include "common/phal_devtree_utils.hpp"
 
 #include <fmt/format.h>
 #include <stdlib.h>

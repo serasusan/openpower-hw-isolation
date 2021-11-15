@@ -2,16 +2,18 @@
 
 #pragma once
 
-#include "common_types.hpp"
-#include "hardware_isolation_entry.hpp"
-#include "isolatable_hardwares.hpp"
-#include "openpower_guard_interface.hpp"
+#include "common/common_types.hpp"
+#include "common/isolatable_hardwares.hpp"
+#include "common/watch.hpp"
+#include "hw_isolation_record/entry.hpp"
+#include "hw_isolation_record/openpower_guard_interface.hpp"
 #include "org/open_power/HardwareIsolation/Create/server.hpp"
-#include "watch.hpp"
 #include "xyz/openbmc_project/Collection/DeleteAll/server.hpp"
 #include "xyz/openbmc_project/HardwareIsolation/Create/server.hpp"
 
 namespace hw_isolation
+{
+namespace record
 {
 
 using CreateInterface =
@@ -226,4 +228,5 @@ class Manager :
     void createEntryForRecord(const openpower_guard::GuardRecord& record);
 };
 
+} // namespace record
 } // namespace hw_isolation

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "isolatable_hardwares.hpp"
+#include "common/isolatable_hardwares.hpp"
 
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 #include <fmt/format.h>
 

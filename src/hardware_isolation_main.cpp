@@ -2,8 +2,8 @@
 
 #include "config.h"
 
-#include "hardware_isolation_manager.hpp"
-#include "utils.hpp"
+#include "common/utils.hpp"
+#include "hw_isolation_record/manager.hpp"
 
 #include <fmt/format.h>
 
@@ -28,11 +28,11 @@ int main()
         sdbusplus::server::manager::manager objManager(bus,
                                                        HW_ISOLATION_OBJPATH);
 
-        hw_isolation::Manager hardware_isolation_mgr(bus, HW_ISOLATION_OBJPATH,
-                                                     event.get());
+        hw_isolation::record::Manager record_mgr(bus, HW_ISOLATION_OBJPATH,
+                                                 event.get());
 
         // Restore the isolated hardwares from their persisted location.
-        hardware_isolation_mgr.restore();
+        record_mgr.restore();
 
         // The below statement should be last to enter this app into the loop
         // to process D-Bus services.

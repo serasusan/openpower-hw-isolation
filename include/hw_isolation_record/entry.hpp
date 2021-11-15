@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "common_types.hpp"
-#include "openpower_guard_interface.hpp"
+#include "common/common_types.hpp"
+#include "hw_isolation_record/openpower_guard_interface.hpp"
 
 #include <xyz/openbmc_project/Association/Definitions/server.hpp>
 #include <xyz/openbmc_project/HardwareIsolation/Entry/server.hpp>
@@ -14,6 +14,8 @@
 #include <vector>
 
 namespace hw_isolation
+{
+namespace record
 {
 namespace entry
 {
@@ -153,4 +155,5 @@ std::optional<openpower_guard::GardType>
 
 } // namespace utils
 } // namespace entry
+} // namespace record
 } // namespace hw_isolation

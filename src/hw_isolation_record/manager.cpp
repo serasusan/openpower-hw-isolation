@@ -2,10 +2,10 @@
 
 #include "config.h"
 
-#include "hardware_isolation_manager.hpp"
+#include "hw_isolation_record/manager.hpp"
 
-#include "common_types.hpp"
-#include "utils.hpp"
+#include "common/common_types.hpp"
+#include "common/utils.hpp"
 
 #include <fmt/format.h>
 
@@ -17,6 +17,8 @@
 #include <sstream>
 
 namespace hw_isolation
+{
+namespace record
 {
 
 using namespace phosphor::logging;
@@ -34,7 +36,8 @@ Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
         eventLoop, IN_NONBLOCK, IN_CLOSE_WRITE, EPOLLIN,
         openpower_guard::getGuardFilePath(),
         std::bind(
-            std::mem_fn(&hw_isolation::Manager::handleHostIsolatedHardwares),
+            std::mem_fn(
+                &hw_isolation::record::Manager::handleHostIsolatedHardwares),
             this))
 {}
 
@@ -513,4 +516,5 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     return *entryPath;
 }
 
+} // namespace record
 } // namespace hw_isolation

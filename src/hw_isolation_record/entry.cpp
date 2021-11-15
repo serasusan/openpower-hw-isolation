@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "hardware_isolation_entry.hpp"
+#include "hw_isolation_record/entry.hpp"
 
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 #include <fmt/format.h>
 
@@ -11,6 +11,8 @@
 #include <ctime>
 
 namespace hw_isolation
+{
+namespace record
 {
 namespace entry
 {
@@ -127,4 +129,5 @@ std::optional<openpower_guard::GardType>
 
 } // namespace utils
 } // namespace entry
+} // namespace record
 } // namespace hw_isolation
