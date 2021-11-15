@@ -227,7 +227,16 @@ std::pair<LocationCode, InstanceId> getFRUDetails(struct pdbg_target* fruTgt)
 
     InstanceId instanceId = 0xFFFFFFFF;
     ATTR_MRU_ID_Type mruId;
-    if (!DT_GET_PROP(ATTR_MRU_ID, fruTgt, mruId))
+    /**
+     * The use case is, get mru id if present in the FRU target
+     * so don't use "DT_GET_PROP" to read attribute because it will add trace
+     * if the given attribute is not found.
+     *
+     * For example, DIMM doesn't have MRU_ID.
+     */
+    if (pdbg_target_get_attribute(
+            fruTgt, "ATTR_MRU_ID", std::stoi(dtAttr::fapi2::ATTR_MRU_ID_Spec),
+            dtAttr::fapi2::ATTR_MRU_ID_ElementCount, &mruId))
     {
         // Last two byte (from MSB) of MRU_ID having instance number
         instanceId = mruId & 0xFFFF;
@@ -278,10 +287,18 @@ InstanceId getHwInstIdFromDevTree(struct pdbg_target* devTreeTgt)
     }
     else
     {
-        // Check If MRU_ID is present. If yes, use it else use pdbg target index
-        // Example: The MRU_ID is present for nx which is not a chiplet
+        /**
+         * Check If MRU_ID is present. If yes, use it else use pdbg target index
+         * Example: The MRU_ID is present for nx which is not a chiplet
+         *
+         * Don't use "DT_GET_PROP" to read attribute because it will add trace
+         * if the given attribute is not found.
+         */
         ATTR_MRU_ID_Type devTreeMruId;
-        if (!DT_GET_PROP(ATTR_MRU_ID, devTreeTgt, devTreeMruId))
+        if (pdbg_target_get_attribute(
+                devTreeTgt, "ATTR_MRU_ID",
+                std::stoi(dtAttr::fapi2::ATTR_MRU_ID_Spec),
+                dtAttr::fapi2::ATTR_MRU_ID_ElementCount, &devTreeMruId))
         {
             // Last two byte (from MSB) of MRU_ID having instance number
             instanceId = devTreeMruId & 0xFFFF;
