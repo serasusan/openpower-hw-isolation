@@ -482,5 +482,48 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     return *entryPath;
 }
 
+std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
+    Manager::getIsolatedHwRecordInfo(
+        const sdbusplus::message::object_path& hwInventoryPath)
+{
+    // Make sure whether the given hardware inventory is exists
+    // in the record list.
+    auto entryIt =
+        std::find_if(_isolatedHardwares.begin(), _isolatedHardwares.end(),
+                     [hwInventoryPath](const auto& ele) {
+                         for (const auto& assocEle : ele.second->associations())
+                         {
+                             if ((std::get<0>(assocEle) == "isolated_hw") &&
+                                 (std::get<2>(assocEle) == hwInventoryPath.str))
+                             {
+                                 // Make sure whether the given hardware
+                                 // inventory is not resolved because the same
+                                 // hardware might be isolated and resolved many
+                                 // times.
+                                 return !ele.second->resolved();
+                             }
+                         }
+
+                         return false;
+                     });
+
+    if (entryIt == _isolatedHardwares.end())
+    {
+        return std::nullopt;
+    }
+
+    entry::EntryErrLogPath errLogPath;
+    for (const auto& assocEle : entryIt->second->associations())
+    {
+        if (std::get<0>(assocEle) == "isolated_hw_errorlog")
+        {
+            errLogPath = std::get<2>(assocEle);
+            break;
+        }
+    }
+
+    return std::make_tuple(entryIt->second->severity(), errLogPath);
+}
+
 } // namespace record
 } // namespace hw_isolation
