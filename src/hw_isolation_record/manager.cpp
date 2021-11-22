@@ -427,6 +427,14 @@ void Manager::handleHostIsolatedHardwares()
 
     openpower_guard::GuardRecords records = openpower_guard::getAll();
 
+    // Delete all the D-Bus entries if no record in their persisted location
+    if ((records.size() == 0) && _isolatedHardwares.size() > 0)
+    {
+        _isolatedHardwares.clear();
+        _lastEntryId = 0;
+        return;
+    }
+
     std::for_each(records.begin(), records.end(), [this](const auto& record) {
         // Skipping fake record (GARD_Reconfig) because, fake record is
         // created for internal purposes to use by BMC and Hostboot.
