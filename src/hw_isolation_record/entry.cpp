@@ -23,7 +23,7 @@ Entry::Entry(sdbusplus::bus::bus& bus, const std::string& objPath,
              const EntryId entryId, const EntryRecordId entryRecordId,
              const EntrySeverity isolatedHwSeverity,
              const EntryResolved entryIsResolved,
-             const AssociationDef& associationDef,
+             const type::AssociationDef& associationDef,
              const openpower_guard::EntityPath& entityPath) :
     type::ServerObject<EntryInterface, AssociationDefInterface, EpochTime,
                        DeleteInterface>(bus, objPath.c_str(), true),

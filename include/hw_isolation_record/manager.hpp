@@ -130,6 +130,22 @@ class Manager :
             severity,
         sdbusplus::message::object_path bmcErrorLog) override;
 
+    /**
+     * @brief Used to the isolated hardware entry information.
+     *
+     * @param[in] hwInventoryPath - the hardware inventory path to get
+     *                              the entry information.
+     *
+     * @return tuple with EntrySeverity, EntryErrLogPath on success
+     *         Empty optional if the hardware is not isolated
+     *
+     * @note The EntryErrLogPath will be empty if the respective entry
+     *       does not have bmc error log path.
+     */
+    std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
+        getIsolatedHwRecordInfo(
+            const sdbusplus::message::object_path& hwInventoryPath);
+
   private:
     /**
      *  * @brief Attached bus connection
@@ -201,17 +217,6 @@ class Manager :
      *         NULL if allowed
      */
     void isHwIsolationAllowed(const entry::EntrySeverity& severity);
-
-    /**
-     * @brief Used to get BMC log object path by using EID (aka PEL ID)
-     *
-     * @param[in] eid - The EID (aka PEL ID) to get BMC log object path
-     *
-     * @return The BMC log object path
-     *         Empty optional on failure
-     */
-    std::optional<sdbusplus::message::object_path>
-        getBMCLogPath(const uint32_t eid) const;
 
     /**
      * @brief Create dbus entry object for isolated hardware record

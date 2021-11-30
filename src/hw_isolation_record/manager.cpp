@@ -24,9 +24,6 @@ namespace record
 using namespace phosphor::logging;
 namespace fs = std::filesystem;
 
-constexpr auto loggingObjectPath = "/xyz/openbmc_project/logging";
-constexpr auto loggingInterface = "org.open_power.Logging.PEL";
-
 Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
                  const sd_event* eventLoop) :
     type::ServerObject<CreateInterface, OP_CreateInterface, DeleteAllInterface>(
@@ -49,11 +46,11 @@ std::optional<uint32_t>
         uint32_t eid;
 
         auto dbusServiceName = utils::getDBusServiceName(
-            _bus, loggingObjectPath, loggingInterface);
+            _bus, type::LoggingObjectPath, type::LoggingInterface);
 
-        auto method =
-            _bus.new_method_call(dbusServiceName.c_str(), loggingObjectPath,
-                                 loggingInterface, "GetPELIdFromBMCLogId");
+        auto method = _bus.new_method_call(
+            dbusServiceName.c_str(), type::LoggingObjectPath,
+            type::LoggingInterface, "GetPELIdFromBMCLogId");
 
         method.append(static_cast<uint32_t>(std::stoi(bmcErrorLog.filename())));
         auto resp = _bus.call(method);
@@ -87,17 +84,17 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
         // Note: Association forward and reverse type are defined as per
         // hardware isolation design document (aka guard) and hardware isolation
         // entry dbus interface document for hardware and error object path
-        entry::AsscDefFwdType isolateHwFwdType("isolated_hw");
-        entry::AsscDefRevType isolatedHwRevType("isolated_hw_entry");
-        entry::AssociationDef associationDeftoHw;
+        type::AsscDefFwdType isolateHwFwdType("isolated_hw");
+        type::AsscDefRevType isolatedHwRevType("isolated_hw_entry");
+        type::AssociationDef associationDeftoHw;
         associationDeftoHw.push_back(std::make_tuple(
             isolateHwFwdType, isolatedHwRevType, isolatedHardware));
 
         // Add errog log as Association if given
         if (!bmcErrorLog.empty())
         {
-            entry::AsscDefFwdType bmcErrorLogFwdType("isolated_hw_errorlog");
-            entry::AsscDefRevType bmcErrorLogRevType("isolated_hw_entry");
+            type::AsscDefFwdType bmcErrorLogFwdType("isolated_hw_errorlog");
+            type::AsscDefRevType bmcErrorLogRevType("isolated_hw_entry");
             associationDeftoHw.push_back(std::make_tuple(
                 bmcErrorLogFwdType, bmcErrorLogRevType, bmcErrorLog));
         }
@@ -276,45 +273,6 @@ void Manager::deleteAll()
     }
 }
 
-std::optional<sdbusplus::message::object_path>
-    Manager::getBMCLogPath(const uint32_t eid) const
-{
-    // If EID is "0" means doesn't have associated error log in
-    // isolated hardware
-    if (eid == 0)
-    {
-        return sdbusplus::message::object_path();
-    }
-
-    try
-    {
-        auto dbusServiceName = utils::getDBusServiceName(
-            _bus, loggingObjectPath, loggingInterface);
-
-        auto method =
-            _bus.new_method_call(dbusServiceName.c_str(), loggingObjectPath,
-                                 loggingInterface, "GetBMCLogIdFromPELId");
-
-        method.append(static_cast<uint32_t>(eid));
-        auto resp = _bus.call(method);
-
-        uint32_t bmcLogId;
-        resp.read(bmcLogId);
-
-        return sdbusplus::message::object_path(std::string(loggingObjectPath) +
-                                               "/entry/" +
-                                               std::to_string(bmcLogId));
-    }
-    catch (const sdbusplus::exception::SdBusError& e)
-    {
-        log<level::ERR>(fmt::format("Failed to get BMC log id "
-                                    "for the given EID (aka PEL ID) [{}]",
-                                    eid)
-                            .c_str());
-        return std::nullopt;
-    }
-}
-
 void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record)
 {
     auto entityPathRawData =
@@ -348,7 +306,7 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record)
             return;
         }
 
-        auto bmcErrorLogPath = getBMCLogPath(record.elogId);
+        auto bmcErrorLogPath = utils::getBMCLogPath(_bus, record.elogId);
 
         if (!bmcErrorLogPath.has_value())
         {
@@ -522,6 +480,49 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
         throw type::CommonError::InternalFailure();
     }
     return *entryPath;
+}
+
+std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
+    Manager::getIsolatedHwRecordInfo(
+        const sdbusplus::message::object_path& hwInventoryPath)
+{
+    // Make sure whether the given hardware inventory is exists
+    // in the record list.
+    auto entryIt =
+        std::find_if(_isolatedHardwares.begin(), _isolatedHardwares.end(),
+                     [hwInventoryPath](const auto& ele) {
+                         for (const auto& assocEle : ele.second->associations())
+                         {
+                             if ((std::get<0>(assocEle) == "isolated_hw") &&
+                                 (std::get<2>(assocEle) == hwInventoryPath.str))
+                             {
+                                 // Make sure whether the given hardware
+                                 // inventory is not resolved because the same
+                                 // hardware might be isolated and resolved many
+                                 // times.
+                                 return !ele.second->resolved();
+                             }
+                         }
+
+                         return false;
+                     });
+
+    if (entryIt == _isolatedHardwares.end())
+    {
+        return std::nullopt;
+    }
+
+    entry::EntryErrLogPath errLogPath;
+    for (const auto& assocEle : entryIt->second->associations())
+    {
+        if (std::get<0>(assocEle) == "isolated_hw_errorlog")
+        {
+            errLogPath = std::get<2>(assocEle);
+            break;
+        }
+    }
+
+    return std::make_tuple(entryIt->second->severity(), errLogPath);
 }
 
 } // namespace record

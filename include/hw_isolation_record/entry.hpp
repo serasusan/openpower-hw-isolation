@@ -30,15 +30,12 @@ using EntryResolved = bool;
 
 using AssociationDefInterface =
     sdbusplus::xyz::openbmc_project::Association::server::Definitions;
-using AsscDefFwdType = std::string;
-using AsscDefRevType = std::string;
-using AssociatedObjPat = std::string;
-using AssociationDef =
-    std::vector<std::tuple<AsscDefFwdType, AsscDefRevType, AssociatedObjPat>>;
 
 using EpochTime = sdbusplus::xyz::openbmc_project::Time::server::EpochTime;
 
 using DeleteInterface = sdbusplus::xyz::openbmc_project::Object::server::Delete;
+
+using EntryErrLogPath = std::string;
 
 /**
  * @class Entry
@@ -80,7 +77,7 @@ class Entry :
           const EntryId entryId, const EntryRecordId entryRecordId,
           const EntrySeverity isolatedHwSeverity,
           const EntryResolved entryIsResolved,
-          const AssociationDef& associationDef,
+          const type::AssociationDef& associationDef,
           const openpower_guard::EntityPath& entityPath);
 
     /**
