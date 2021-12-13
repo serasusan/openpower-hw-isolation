@@ -327,13 +327,6 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
         }
 
         auto isolateHwDetails = getIsotableHWDetails(isolateHwId);
-
-        // Make sure the given isolateHardware invetory path is exist
-        // getDBusServiceName() will throw exception if the given object
-        // is not exist.
-        utils::getDBusServiceName(_bus, isolateHardware.str,
-                                  isolateHwDetails->first._interfaceName._name);
-
         if (!isolateHwDetails.has_value())
         {
             log<level::ERR>(
@@ -343,6 +336,12 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
                     .c_str());
             return std::nullopt;
         }
+
+        // Make sure the given isolateHardware inventory path is exist
+        // getDBusServiceName() will throw exception if the given object
+        // is not exist.
+        utils::getDBusServiceName(_bus, isolateHardware.str,
+                                  isolateHwDetails->first._interfaceName._name);
 
         struct pdbg_target* isolateHwTarget;
         devtree::lookup_func::CanGetPhysPath canGetPhysPath{false};
@@ -379,12 +378,14 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
             {
                 return std::nullopt;
             }
+
             auto parentFruInstanceInfo =
                 getInstanceInfo(parentFruObjPath->filename());
             if (!parentFruInstanceInfo.has_value())
             {
                 return std::nullopt;
             }
+
             auto parentFruHwDetails =
                 getIsotableHWDetails(isolateHwDetails->second._parentFruHwId);
             if (!parentFruHwDetails.has_value())
@@ -400,7 +401,6 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
 
             auto unExpandedLocCode{devtree::getUnexpandedLocCode(
                 getLocationCode(*parentFruObjPath))};
-
             if (!unExpandedLocCode.has_value())
             {
                 return std::nullopt;
@@ -690,7 +690,6 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
 
             auto inventoryPathList =
                 getInventoryPathsByLocCode(isolatedHwInfo.first);
-
             if (!inventoryPathList.has_value())
             {
                 return std::nullopt;
@@ -772,7 +771,6 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
 
             auto childsInventoryPath = getChildsInventoryPath(
                 *parentFruPath, isolatedHwDetails->first._interfaceName._name);
-
             if (!childsInventoryPath.has_value())
             {
                 return std::nullopt;
