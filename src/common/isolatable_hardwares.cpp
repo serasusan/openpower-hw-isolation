@@ -164,6 +164,20 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
          IsolatableHWs::HW_Details(
              !ItIsFRU, dimmHwId, devtree::lookup_func::pdbgIndex,
              inv_path_lookup_func::itemPrettyName, "DDR Memory Port")},
+
+        // ADC and GPIO Expander are Generic I2C Device
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "adc"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Control Device")},
+
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface,
+                                         "gpio_expander"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Control Device")},
     };
 }
 
@@ -575,16 +589,29 @@ std::optional<struct pdbg_target*>
     std::string fruUnitPdbgClass{pdbg_target_class_name(devTreeTgt)};
 
     struct pdbg_target* parentFruTarget = nullptr;
-    if ((fruUnitPdbgClass == "ocmb") || (fruUnitPdbgClass == "mem_port"))
+    if ((fruUnitPdbgClass == "ocmb") || (fruUnitPdbgClass == "mem_port") ||
+        (fruUnitPdbgClass == "adc") || (fruUnitPdbgClass == "gpio_expander"))
     {
         /**
-         * FIXME: The assumption is, dimm is parent fru for "ocmb" and
-         *        "mem_port" and each "ocmb" or "mem_port" will have one
-         *        "dimm" so if something is changed then need to fix
-         *        this logic.
+         * FIXME: The assumption is, dimm is parent fru for "ocmb", "mem_port",
+         *        "adc", and "gpio_expander" units and those units
+         *        will have only one "dimm" so if something is changed then,
+         *        need to fix this logic.
          * @note  In phal cec device tree dimm is placed under ocmb->mem_port
          *        based on dimm pervasive path.
          */
+        if ((fruUnitPdbgClass == "adc") ||
+            (fruUnitPdbgClass == "gpio_expander"))
+        {
+            /**
+             * The "adc", and "gpio_expander" units are placed under ocmb
+             * but, dimm is placed under the ocmb so, we need to get
+             * the parent ocmb for the given "adc", and "gpio_expander"
+             * units to get the dimm fru target.
+             */
+            devTreeTgt = pdbg_target_parent("ocmb", devTreeTgt);
+        }
+
         auto dimmCount = 0;
         struct pdbg_target* lastDimmTgt = nullptr;
         pdbg_for_each_target("dimm", devTreeTgt, lastDimmTgt)
