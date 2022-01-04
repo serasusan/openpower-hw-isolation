@@ -178,6 +178,12 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
                                    devtree::lookup_func::pdbgIndex,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Onboard Memory Power Control Device")},
+
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "pmic"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Management IC")},
     };
 }
 
@@ -590,23 +596,25 @@ std::optional<struct pdbg_target*>
 
     struct pdbg_target* parentFruTarget = nullptr;
     if ((fruUnitPdbgClass == "ocmb") || (fruUnitPdbgClass == "mem_port") ||
-        (fruUnitPdbgClass == "adc") || (fruUnitPdbgClass == "gpio_expander"))
+        (fruUnitPdbgClass == "adc") || (fruUnitPdbgClass == "gpio_expander") ||
+        (fruUnitPdbgClass == "pmic"))
     {
         /**
          * FIXME: The assumption is, dimm is parent fru for "ocmb", "mem_port",
-         *        "adc", and "gpio_expander" units and those units
+         *        "adc", "gpio_expander", and "pmic" units and those units
          *        will have only one "dimm" so if something is changed then,
          *        need to fix this logic.
          * @note  In phal cec device tree dimm is placed under ocmb->mem_port
          *        based on dimm pervasive path.
          */
         if ((fruUnitPdbgClass == "adc") ||
-            (fruUnitPdbgClass == "gpio_expander"))
+            (fruUnitPdbgClass == "gpio_expander") ||
+            (fruUnitPdbgClass == "pmic"))
         {
             /**
-             * The "adc", and "gpio_expander" units are placed under ocmb
-             * but, dimm is placed under the ocmb so, we need to get
-             * the parent ocmb for the given "adc", and "gpio_expander"
+             * The "adc", "gpio_expander", and "pmic" units are placed under
+             * ocmb but, dimm is placed under the ocmb so, we need to get the
+             * parent ocmb for the given "adc", "gpio_expander", and "pmic"
              * units to get the dimm fru target.
              */
             devTreeTgt = pdbg_target_parent("ocmb", devTreeTgt);
