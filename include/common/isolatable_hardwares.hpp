@@ -254,7 +254,7 @@ class IsolatableHWs
     /**
      * @brief The list of isolatable hardwares
      */
-    std::map<HW_Details::HwId, HW_Details> _isolatableHWsList;
+    std::multimap<HW_Details::HwId, HW_Details> _isolatableHWsList;
 
     /**
      * @brief Helper function to segregate the instance name and id
@@ -282,6 +282,19 @@ class IsolatableHWs
      */
     std::optional<std::pair<HW_Details::HwId, HW_Details>>
         getIsotableHWDetails(const HW_Details::HwId& id) const;
+
+    /**
+     * @brief Helper function to get isolatable hardware details
+     *        based on the given PrettyName.
+     *
+     * @param[in] prettyName - The prettyName to get isolatable
+     *                         hardware details.
+     *
+     * @return the hardware details for the given prettyName
+     *         or an empty optional if not found.
+     */
+    std::optional<std::pair<HW_Details::HwId, HW_Details>>
+        getIsolatableHWDetailsByPrettyName(const std::string& prettyName) const;
 
     /**
      * @brief Used to get location code from given dbus object path

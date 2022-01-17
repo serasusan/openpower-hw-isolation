@@ -74,6 +74,14 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemInstance, "")},
 
+        // In BMC inventory, ECO mode core is modeled as a subunit since it
+        // is not the normal core
+        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
+                                         "unit", "core"),
+         IsolatableHWs::HW_Details(
+             !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
+             inv_path_lookup_func::itemPrettyName, "Cache-Only Core")},
+
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
                                          "unit", "mc"),
          IsolatableHWs::HW_Details(
@@ -216,6 +224,24 @@ std::optional<
     auto it = std::find_if(
         _isolatableHWsList.begin(), _isolatableHWsList.end(),
         [&id](const auto& isolatableHw) { return isolatableHw.first == id; });
+
+    if (it != _isolatableHWsList.end())
+    {
+        return *it;
+    }
+    return std::nullopt;
+}
+
+std::optional<
+    std::pair<IsolatableHWs::HW_Details::HwId, IsolatableHWs::HW_Details>>
+    IsolatableHWs::getIsolatableHWDetailsByPrettyName(
+        const std::string& prettyName) const
+{
+    auto it =
+        std::find_if(_isolatableHWsList.begin(), _isolatableHWsList.end(),
+                     [&prettyName](const auto& isolatableHw) {
+                         return isolatableHw.second._prettyName == prettyName;
+                     });
 
     if (it != _isolatableHWsList.end())
     {
@@ -614,10 +640,34 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
         }
         std::string isolatedHwPdbgClass{pdbgTgtClass};
 
+        std::optional<std::pair<IsolatableHWs::HW_Details::HwId,
+                                IsolatableHWs::HW_Details>>
+            isolatedHwDetails;
         auto isolatedHwId = IsolatableHWs::HW_Details::HwId{
             IsolatableHWs::HW_Details::HwId::PhalPdbgClassName(
                 isolatedHwPdbgClass)};
-        auto isolatedHwDetails = getIsotableHWDetails(isolatedHwId);
+
+        if (isolatedHwId._pdbgClassName._name == "core")
+        {
+            if (devtree::isECOcore(*isolatedHwTgt))
+            {
+                /**
+                 * Inventory path is different for ECO core and that need to
+                 * get by using the PrettyName since we need to show different
+                 * name for the isolated ECO mode core while listing records.
+                 */
+                isolatedHwDetails =
+                    getIsolatableHWDetailsByPrettyName("Cache-Only Core");
+            }
+            else
+            {
+                isolatedHwDetails = getIsotableHWDetails(isolatedHwId);
+            }
+        }
+        else
+        {
+            isolatedHwDetails = getIsotableHWDetails(isolatedHwId);
+        }
 
         if (!isolatedHwDetails.has_value())
         {
