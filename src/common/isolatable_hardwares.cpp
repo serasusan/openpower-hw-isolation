@@ -21,16 +21,15 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
      * @brief HwId consists with below ids.
      *
      * 1 - The inventory item interface name
-     * 2 - The inventory item object name
-     * 3 - The pdbg class name
+     * 2 - The pdbg class name
      */
     // The below HwIds will be used to many units as parent fru
     // so creating one object which can reuse.
     IsolatableHWs::HW_Details::HwId processorHwId(
-        "xyz.openbmc_project.Inventory.Item.Cpu", "cpu", "proc");
+        "xyz.openbmc_project.Inventory.Item.Cpu", "proc");
     IsolatableHWs::HW_Details::HwId dimmHwId(
-        "xyz.openbmc_project.Inventory.Item.Dimm", "dimm", "dimm");
-    IsolatableHWs::HW_Details::HwId emptyHwId("", "", "");
+        "xyz.openbmc_project.Inventory.Item.Dimm", "dimm");
+    IsolatableHWs::HW_Details::HwId emptyHwId("", "");
     bool ItIsFRU = true;
 
     _isolatableHWsList = {
@@ -39,22 +38,22 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
 
         {processorHwId, IsolatableHWs::HW_Details(
                             ItIsFRU, emptyHwId, devtree::lookup_func::mruId,
-                            inv_path_lookup_func::itemInstance, "")},
+                            inv_path_lookup_func::itemInstanceId, "")},
 
         {dimmHwId, IsolatableHWs::HW_Details(
                        ItIsFRU, emptyHwId, devtree::lookup_func::locationCode,
-                       inv_path_lookup_func::itemObjName, "")},
+                       inv_path_lookup_func::itemLocationCode, "")},
 
         {IsolatableHWs::HW_Details::HwId(
-             "xyz.openbmc_project.Inventory.Item.Tpm", "tpm", "tpm"),
+             "xyz.openbmc_project.Inventory.Item.Tpm", "tpm"),
          IsolatableHWs::HW_Details(ItIsFRU, emptyHwId,
                                    devtree::lookup_func::locationCode,
-                                   inv_path_lookup_func::itemObjName, "")},
+                                   inv_path_lookup_func::itemLocationCode, "")},
 
         // Processor Subunits
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "eq"),
+                                         "eq"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Quad")},
@@ -63,106 +62,106 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
         // "Inventory.Item.CpuCore" since both are core and it will model based
         // on the system core mode.
         {IsolatableHWs::HW_Details::HwId(
-             "xyz.openbmc_project.Inventory.Item.CpuCore", "core", "fc"),
+             "xyz.openbmc_project.Inventory.Item.CpuCore", "fc"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::pdbgIndex,
-                                   inv_path_lookup_func::itemInstance, "")},
+                                   inv_path_lookup_func::itemInstanceId, "")},
 
         {IsolatableHWs::HW_Details::HwId(
-             "xyz.openbmc_project.Inventory.Item.CpuCore", "core", "core"),
+             "xyz.openbmc_project.Inventory.Item.CpuCore", "core"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
-                                   inv_path_lookup_func::itemInstance, "")},
+                                   inv_path_lookup_func::itemInstanceId, "")},
 
         // In BMC inventory, ECO mode core is modeled as a subunit since it
         // is not the normal core
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "core"),
+                                         "core"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Cache-Only Core")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "mc"),
+                                         "mc"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Memory Controller")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "mi"),
+                                         "mi"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Processor To Memory Buffer Interface")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "mcc"),
+                                         "mcc"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Memory Controller Channel")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "omi"),
+                                         "omi"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "OpenCAPI Memory Interface")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "pauc"),
+                                         "pauc"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "POWER Accelerator Unit Controller")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "pau"),
+                                         "pau"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "POWER Accelerator Unit")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "omic"),
+                                         "omic"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "OpenCAPI Memory Interface Controller")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "iohs"),
+                                         "iohs"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "High speed SMP/OpenCAPI Link")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "smpgroup"),
+                                         "smpgroup"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "OBUS End Point")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "pec"),
+                                         "pec"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "PCI Express controllers")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "phb"),
+                                         "phb"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "PCIe host bridge (PHB)")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "nmmu"),
+                                         "nmmu"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Nest Memory Management Unit")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "nx"),
+                                         "nx"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::mruId,
              inv_path_lookup_func::itemPrettyName, "Accelerator")},
@@ -170,50 +169,17 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
         // Memory (aka DIMM) subunits
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "ocmb"),
+                                         "ocmb"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, dimmHwId, devtree::lookup_func::pdbgIndex,
              inv_path_lookup_func::itemPrettyName, "OpenCAPI Memory Buffer")},
 
         {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "unit", "mem_port"),
+                                         "mem_port"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, dimmHwId, devtree::lookup_func::pdbgIndex,
              inv_path_lookup_func::itemPrettyName, "DDR Memory Port")},
     };
-}
-
-std::optional<
-    std::pair<IsolatableHWs::HW_Details::HwId::ItemObjectName, InstanceId>>
-    IsolatableHWs::getInstanceInfo(const std::string& dbusObjName) const
-{
-    try
-    {
-        std::string hwObjName(dbusObjName);
-
-        std::string::iterator it =
-            std::find_if(hwObjName.begin(), hwObjName.end(),
-                         [](const char chr) { return std::isdigit(chr); });
-
-        IsolatableHWs::HW_Details::HwId::ItemObjectName hwInstanceName(
-            hwObjName.substr(0, std::distance(hwObjName.begin(), it)));
-        InstanceId hwInstanceId{0xFFFFFFFF};
-        if (it != hwObjName.end())
-        {
-            hwInstanceId = std::stoi(
-                hwObjName.substr(std::distance(hwObjName.begin(), it)));
-        }
-        return std::make_pair(hwInstanceName, hwInstanceId);
-    }
-    catch (const std::exception& e)
-    {
-        log<level::ERR>(
-            fmt::format("Exception [{}] to get instance details from "
-                        " given the Dbus object name [{}]",
-                        e.what(), dbusObjName)
-                .c_str());
-    }
-    return std::nullopt;
 }
 
 std::optional<
@@ -250,43 +216,170 @@ std::optional<
     return std::nullopt;
 }
 
+std::optional<
+    std::pair<IsolatableHWs::HW_Details::HwId, IsolatableHWs::HW_Details>>
+    IsolatableHWs::getIsotableHWDetailsByObjPath(
+        const sdbusplus::message::object_path& dbusObjPath) const
+{
+    std::map<std::string, std::vector<std::string>> objServs;
+
+    try
+    {
+        auto method =
+            _bus.new_method_call(type::ObjectMapperName, type::ObjectMapperPath,
+                                 type::ObjectMapperName, "GetObject");
+
+        method.append(dbusObjPath.str);
+        method.append(std::vector<std::string>({}));
+
+        auto reply = _bus.call(method);
+        reply.read(objServs);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::ERR>(fmt::format("Exception [{}] to get the given object "
+                                    "[{}] interfaces",
+                                    e.what(), dbusObjPath.str)
+                            .c_str());
+        return std::nullopt;
+    }
+
+    /**
+     * Get only inventory item interface alone so we can minimize
+     * iteration to get isolatable hardware details.
+     *
+     * Note, "xyz.openbmc_project.Inventory.Item" is generic interface
+     * so no need to look for that.
+     */
+    std::vector<std::pair<std::string, std::string>> inventoryItemIfaces;
+    std::for_each(objServs.begin(), objServs.end(),
+                  [&inventoryItemIfaces](const auto& service) {
+                      auto inventoryItemIfaceIt = std::find_if(
+                          service.second.begin(), service.second.end(),
+                          [](const auto& interface) {
+                              return ((interface.find("Inventory.Item") !=
+                                       std::string::npos) &&
+                                      (!interface.ends_with("Item")));
+                          });
+
+                      if (inventoryItemIfaceIt != service.second.end())
+                      {
+                          inventoryItemIfaces.emplace_back(std::make_pair(
+                              service.first, *inventoryItemIfaceIt));
+                      }
+                  });
+
+    if (inventoryItemIfaces.empty())
+    {
+        log<level::ERR>(fmt::format("The given object [{}] does not contains "
+                                    "any inventory item interface",
+                                    dbusObjPath.str)
+                            .c_str());
+        return std::nullopt;
+    }
+    else if (inventoryItemIfaces.size() > 1)
+    {
+        /**
+         * FIXME: Assumption is, the OpenBMC project does not allow to host
+         *        the same interface by the different services, and more than
+         *        one different inventory item interface (since those will be
+         *        achieved by the Association) in the same object.
+         */
+        std::stringstream objData;
+        std::for_each(inventoryItemIfaces.begin(), inventoryItemIfaces.end(),
+                      [&objData](const auto& ele) {
+                          objData << "Service: " << ele.first
+                                  << " Iface: " << ele.second << " | ";
+                      });
+
+        log<level::ERR>(
+            fmt::format("Either the same interface is hosted "
+                        "by different services or different inventory item "
+                        "interfaces are hosted in the same object [{}]. "
+                        "ObjectData [{}]",
+                        dbusObjPath.str, objData.str())
+                .c_str());
+        return std::nullopt;
+    }
+
+    auto objHwId{IsolatableHWs::HW_Details::HwId{
+        IsolatableHWs::HW_Details::HwId::ItemInterfaceName(
+            inventoryItemIfaces[0].second)}};
+
+    // TODO Below decision need to be based on system core mode
+    //     i.e whether need to use "fc" (in big core system) or
+    //     "core" (in small core system) pdbg target class to get
+    //     the appropriate isotable hardware details.
+    if (objHwId._interfaceName._name.ends_with("CpuCore"))
+    {
+        objHwId = IsolatableHWs::HW_Details::HwId{
+            IsolatableHWs::HW_Details::HwId::PhalPdbgClassName("fc")};
+    }
+
+    return getIsotableHWDetails(objHwId);
+}
+
 LocationCode IsolatableHWs::getLocationCode(
     const sdbusplus::message::object_path& dbusObjPath)
 {
     return utils::getDBusPropertyVal<LocationCode>(
-        _bus, dbusObjPath, "com.ibm.ipzvpd.Location", "LocationCode");
+        _bus, dbusObjPath,
+        "xyz.openbmc_project.Inventory.Decorator.LocationCode", "LocationCode");
 }
 
 std::optional<sdbusplus::message::object_path>
     IsolatableHWs::getParentFruObjPath(
         const sdbusplus::message::object_path& isolateHardware,
-        const IsolatableHWs::HW_Details::HwId::ItemObjectName&
-            parentFruObjectName) const
+        const IsolatableHWs::HW_Details::HwId::ItemInterfaceName&
+            parentFruIfaceName) const
 {
-    size_t startPosOfFruObj =
-        isolateHardware.str.find(parentFruObjectName._name);
-    if (startPosOfFruObj == std::string::npos)
+    std::map<std::string, std::map<std::string, std::vector<std::string>>>
+        parentObjs;
+
+    try
+    {
+        auto method =
+            _bus.new_method_call(type::ObjectMapperName, type::ObjectMapperPath,
+                                 type::ObjectMapperName, "GetAncestors");
+
+        method.append(isolateHardware.str);
+        method.append(std::vector<std::string>({parentFruIfaceName._name}));
+
+        auto reply = _bus.call(method);
+        reply.read(parentObjs);
+    }
+    catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Failed to get parent fru object [{}] "
-                        "path for isolate hardware object path [{}].",
-                        parentFruObjectName._name, isolateHardware.str)
+            fmt::format("Exception [{}] to get the given object [{}] parent "
+                        "by using the given parent interface [{}]",
+                        e.what(), isolateHardware.str, parentFruIfaceName._name)
                 .c_str());
         return std::nullopt;
     }
 
-    size_t endPosOfFruObj = isolateHardware.str.find("/", startPosOfFruObj);
-    if (endPosOfFruObj == std::string::npos)
+    if (parentObjs.empty())
     {
         log<level::ERR>(
-            fmt::format("Failed to get parent fru object [{}] "
-                        "path for isolate hardware object path [{}].",
-                        parentFruObjectName._name, isolateHardware.str)
+            fmt::format("The given object [{}] does not contain any parent "
+                        "with the given parent interface [{}]",
+                        isolateHardware.str, parentFruIfaceName._name)
+                .c_str());
+        return std::nullopt;
+    }
+    else if (parentObjs.size() > 1)
+    {
+        // Should not happen, Always we will have one parent object with
+        // the given parent interface for the given child object.
+        log<level::ERR>(
+            fmt::format("The given object [{}] contain more than one parent "
+                        "with the given parent interface [{}]",
+                        isolateHardware.str, parentFruIfaceName._name)
                 .c_str());
         return std::nullopt;
     }
 
-    return isolateHardware.str.substr(0, endPosOfFruObj);
+    return parentObjs.begin()->first;
 }
 
 std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
@@ -294,14 +387,9 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
 {
     try
     {
-        auto isolateHwInstanceInfo =
-            getInstanceInfo(isolateHardware.filename());
-        if (!isolateHwInstanceInfo.has_value())
-        {
-            return std::nullopt;
-        }
-
-        if (isolateHwInstanceInfo->first._name == "unit")
+        // Currently the subunit (unitN) is not modeled in the inventory
+        // so we cannot locate the right subunit in the CEC device tree.
+        if (isolateHardware.filename().starts_with("unit"))
         {
             log<level::ERR>(
                 fmt::format("Not allowed to isolate the given hardware [{}] "
@@ -311,36 +399,28 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
             return std::nullopt;
         }
 
-        auto isolateHwId = IsolatableHWs::HW_Details::HwId{
-            IsolatableHWs::HW_Details::HwId::ItemObjectName(
-                isolateHwInstanceInfo->first)};
-
-        // TODO Below decision need to be based on system core mode
-        //     i.e whether need to use "fc" (in big core system) or
-        //     "core" (in small core system) pdbg target class to get
-        //     the appropriate target physical path from the phal
-        //     cec device tree but, now using the "fc".
-        if (isolateHwInstanceInfo->first._name == "core")
+        auto isolateHwDetails = getIsotableHWDetailsByObjPath(isolateHardware);
+        if (!isolateHwDetails.has_value())
         {
-            isolateHwId = IsolatableHWs::HW_Details::HwId{
-                IsolatableHWs::HW_Details::HwId::PhalPdbgClassName("fc")};
+            log<level::ERR>(
+                fmt::format("The given hardware inventory object [{}] "
+                            "item interface is not found in isolatable "
+                            "hardware list",
+                            isolateHardware.str)
+                    .c_str());
+            return std::nullopt;
         }
 
-        auto isolateHwDetails = getIsotableHWDetails(isolateHwId);
-
-        // Make sure the given isolateHardware invetory path is exist
+        // Make sure the given isolateHardware inventory path is exist
         // getDBusServiceName() will throw exception if the given object
         // is not exist.
         utils::getDBusServiceName(_bus, isolateHardware.str,
                                   isolateHwDetails->first._interfaceName._name);
 
-        if (!isolateHwDetails.has_value())
+        auto isolateHwInstanceId =
+            utils::getInstanceId(isolateHardware.filename());
+        if (!isolateHwInstanceId.has_value())
         {
-            log<level::ERR>(
-                fmt::format("Given isolate hardware object name [{}] "
-                            "is not found in isolatable hardware list",
-                            isolateHardware.filename())
-                    .c_str());
             return std::nullopt;
         }
 
@@ -361,8 +441,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
                 isolateHwTarget)
             {
                 canGetPhysPath = isolateHwDetails->second._physPathFuncLookUp(
-                    isolateHwTarget, isolateHwInstanceInfo->second,
-                    *unExpandedLocCode);
+                    isolateHwTarget, *isolateHwInstanceId, *unExpandedLocCode);
 
                 if (canGetPhysPath)
                 {
@@ -374,17 +453,19 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
         {
             auto parentFruObjPath = getParentFruObjPath(
                 isolateHardware,
-                isolateHwDetails->second._parentFruHwId._itemObjectName);
+                isolateHwDetails->second._parentFruHwId._interfaceName);
             if (!parentFruObjPath.has_value())
             {
                 return std::nullopt;
             }
-            auto parentFruInstanceInfo =
-                getInstanceInfo(parentFruObjPath->filename());
-            if (!parentFruInstanceInfo.has_value())
+
+            auto parentFruInstanceId =
+                utils::getInstanceId(parentFruObjPath->filename());
+            if (!parentFruInstanceId.has_value())
             {
                 return std::nullopt;
             }
+
             auto parentFruHwDetails =
                 getIsotableHWDetails(isolateHwDetails->second._parentFruHwId);
             if (!parentFruHwDetails.has_value())
@@ -400,7 +481,6 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
 
             auto unExpandedLocCode{devtree::getUnexpandedLocCode(
                 getLocationCode(*parentFruObjPath))};
-
             if (!unExpandedLocCode.has_value())
             {
                 return std::nullopt;
@@ -413,8 +493,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
                 parentFruTarget)
             {
                 canGetPhysPath = parentFruHwDetails->second._physPathFuncLookUp(
-                    parentFruTarget, parentFruInstanceInfo->second,
-                    *unExpandedLocCode);
+                    parentFruTarget, *parentFruInstanceId, *unExpandedLocCode);
 
                 if (!canGetPhysPath)
                 {
@@ -427,7 +506,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
                 {
                     canGetPhysPath =
                         isolateHwDetails->second._physPathFuncLookUp(
-                            isolateHwTarget, isolateHwInstanceInfo->second,
+                            isolateHwTarget, *isolateHwInstanceId,
                             *unExpandedLocCode);
 
                     if (canGetPhysPath)
@@ -495,7 +574,7 @@ std::optional<std::vector<sdbusplus::message::object_path>>
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::ERR>(fmt::format("Exception [{}] to get inventory path for "
-                                    "the given locationc code [{}]",
+                                    "the given location code [{}]",
                                     e.what(), unexpandedLocCode)
                             .c_str());
         return std::nullopt;
@@ -615,6 +694,65 @@ std::optional<std::vector<sdbusplus::message::object_path>>
     return listOfChildsInventoryPath;
 }
 
+std::optional<sdbusplus::message::object_path>
+    IsolatableHWs::getFRUInventoryPath(
+        const std::pair<LocationCode, InstanceId>& fruDetails,
+        const inv_path_lookup_func::LookupFuncForInvPath& fruInvPathLookupFunc)
+{
+    auto inventoryPathList = getInventoryPathsByLocCode(fruDetails.first);
+    if (!inventoryPathList.has_value())
+    {
+        return std::nullopt;
+    }
+
+    if (inventoryPathList->empty())
+    {
+        // The inventory object doesn't exist for the given location code.
+        log<level::ERR>(
+            fmt::format("The inventory object does not exist for the given "
+                        "location code [{}].",
+                        fruDetails.first)
+                .c_str());
+        return std::nullopt;
+    }
+    else if (inventoryPathList->size() == 1)
+    {
+        // Only one inventory object is exist for the given location code.
+        // For example, DIMM
+        return (*inventoryPathList)[0];
+    }
+    else
+    {
+        /**
+         * More than one inventory objects are exist for the given location code
+         * so use the given instance id to get the right inventory object.
+         *
+         * For example, two processor in the Dual-Chip-Module will have the
+         * same location code so the processor MRU_ID (aka instance id) is
+         * included in the inventory object segment to get the right inventory
+         * object.
+         */
+        inv_path_lookup_func::UniqueHwId fruInstId{fruDetails.second};
+
+        auto fruHwInvPath = std::find_if(
+            inventoryPathList->begin(), inventoryPathList->end(),
+            [&fruInstId, &fruInvPathLookupFunc, this](const auto& path) {
+                return fruInvPathLookupFunc(this->_bus, path, fruInstId);
+            });
+
+        if (fruHwInvPath == inventoryPathList->end())
+        {
+            log<level::ERR>(
+                fmt::format("The inventory object does not exist for "
+                            "the given location code [{}] and instance id [{}]",
+                            fruDetails.first, fruDetails.second)
+                    .c_str());
+            return std::nullopt;
+        }
+        return *fruHwInvPath;
+    }
+}
+
 std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
     const devtree::DevTreePhysPath& physicalPath)
 {
@@ -683,27 +821,10 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
         if (isolatedHwDetails->second._isItFRU)
         {
             auto isolatedHwInfo = devtree::getFRUDetails(*isolatedHwTgt);
-            auto isolateHw = isolatedHwDetails->first._itemObjectName._name +
-                             (isolatedHwInfo.second == 0xFFFFFFFF
-                                  ? ""
-                                  : std::to_string(isolatedHwInfo.second));
 
-            auto inventoryPathList =
-                getInventoryPathsByLocCode(isolatedHwInfo.first);
-
-            if (!inventoryPathList.has_value())
-            {
-                return std::nullopt;
-            }
-
-            auto isolateHwPath = std::find_if(
-                inventoryPathList->begin(), inventoryPathList->end(),
-                [&isolateHw, &isolatedHwDetails, this](const auto& path) {
-                    return isolatedHwDetails->second._invPathFuncLookUp(
-                        path, isolateHw, this->_bus);
-                });
-
-            if (isolateHwPath == inventoryPathList->end())
+            auto inventoryPath = getFRUInventoryPath(
+                isolatedHwInfo, isolatedHwDetails->second._invPathFuncLookUp);
+            if (!inventoryPath.has_value())
             {
                 log<level::ERR>(fmt::format("Failed to get inventory path for "
                                             "given device path [{}]",
@@ -712,7 +833,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                 return std::nullopt;
             }
 
-            isolatedHwInventoryPath = *isolateHwPath;
+            isolatedHwInventoryPath = *inventoryPath;
         }
         else
         {
@@ -741,26 +862,10 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
             }
 
             auto parentFruHwInfo = devtree::getFRUDetails(*parentFruTgt);
-            auto parentFruHw = parentFruHwDetails->first._itemObjectName._name +
-                               (parentFruHwInfo.second == 0xFFFFFFFF
-                                    ? ""
-                                    : std::to_string(parentFruHwInfo.second));
 
-            auto parentFruInventoryPathList =
-                getInventoryPathsByLocCode(parentFruHwInfo.first);
-            if (!parentFruInventoryPathList.has_value())
-            {
-                return std::nullopt;
-            }
-
-            auto parentFruPath = std::find_if(
-                parentFruInventoryPathList->begin(),
-                parentFruInventoryPathList->end(),
-                [&parentFruHw, &parentFruHwDetails, this](const auto& path) {
-                    return parentFruHwDetails->second._invPathFuncLookUp(
-                        path, parentFruHw, this->_bus);
-                });
-            if (parentFruPath == parentFruInventoryPathList->end())
+            auto parentFruPath = getFRUInventoryPath(
+                parentFruHwInfo, parentFruHwDetails->second._invPathFuncLookUp);
+            if (!parentFruPath.has_value())
             {
                 log<level::ERR>(
                     fmt::format("Failed to get get parent fru inventory path "
@@ -772,7 +877,6 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
 
             auto childsInventoryPath = getChildsInventoryPath(
                 *parentFruPath, isolatedHwDetails->first._interfaceName._name);
-
             if (!childsInventoryPath.has_value())
             {
                 return std::nullopt;
@@ -806,29 +910,27 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
             }
 
             /**
-             * If PrettyName is not empty then use that as instance name
+             * If PrettyName is not empty then use that as unique hardware id
              * because currently few isolatbale hardware subunits is not
              * modelled in BMC Inventory and Redfish so these subunits
              * need to look based on PrettyName to get inventory path.
              */
-            std::string isolateHw;
-            if (isolatedHwDetails->second._prettyName.empty())
+            inv_path_lookup_func::UniqueHwId uniqIsolateHwKey;
+            if (!isolatedHwDetails->second._prettyName.empty())
             {
-                isolateHw = isolatedHwDetails->first._itemObjectName._name +
-                            (isolateHwInstId == 0xFFFFFFFF
-                                 ? ""
-                                 : std::to_string(isolateHwInstId));
+                uniqIsolateHwKey = isolatedHwDetails->second._prettyName;
             }
             else
             {
-                isolateHw = isolatedHwDetails->second._prettyName;
+                uniqIsolateHwKey = isolateHwInstId;
             }
 
             auto isolateHwPath = std::find_if(
                 childsInventoryPath->begin(), childsInventoryPath->end(),
-                [&isolateHw, &isolatedHwDetails, this](const auto& path) {
+                [&uniqIsolateHwKey, &isolatedHwDetails,
+                 this](const auto& path) {
                     return isolatedHwDetails->second._invPathFuncLookUp(
-                        path, isolateHw, this->_bus);
+                        this->_bus, path, uniqIsolateHwKey);
                 });
 
             if (isolateHwPath == childsInventoryPath->end())
@@ -856,34 +958,82 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
 namespace inv_path_lookup_func
 {
 
-IsItIsoHwInvPath itemObjName(const sdbusplus::message::object_path& objPath,
-                             const std::string& instance,
-                             sdbusplus::bus::bus& /* bus */)
+IsItIsoHwInvPath itemInstanceId(sdbusplus::bus::bus& /* bus */,
+                                const sdbusplus::message::object_path& objPath,
+                                const UniqueHwId& instanceId)
 {
-    return objPath.filename().find(instance) != std::string::npos;
+    if (!std::holds_alternative<type::InstanceId>(instanceId))
+    {
+        // Should not happen, could be wrong lookup function
+        return false;
+    }
+
+    auto objInstId = utils::getInstanceId(objPath.filename());
+    if (!objInstId.has_value())
+    {
+        return false;
+    }
+
+    return *objInstId == std::get<type::InstanceId>(instanceId);
 }
 
-IsItIsoHwInvPath itemInstance(const sdbusplus::message::object_path& objPath,
-                              const std::string& instance,
-                              sdbusplus::bus::bus& /* bus */)
+IsItIsoHwInvPath itemPrettyName(sdbusplus::bus::bus& bus,
+                                const sdbusplus::message::object_path& objPath,
+                                const UniqueHwId& prettyName)
 {
-    return objPath.filename() == instance;
-}
+    if (!std::holds_alternative<std::string>(prettyName))
+    {
+        // Should not happen, could be wrong lookup function
+        return false;
+    }
 
-IsItIsoHwInvPath itemPrettyName(const sdbusplus::message::object_path& objPath,
-                                const std::string& instance,
-                                sdbusplus::bus::bus& bus)
-{
     try
     {
-        auto prettyName = utils::getDBusPropertyVal<std::string>(
+        auto retPrettyName = utils::getDBusPropertyVal<std::string>(
             bus, objPath, "xyz.openbmc_project.Inventory.Item", "PrettyName");
-        return prettyName == instance;
+
+        return retPrettyName == std::get<std::string>(prettyName);
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::WARNING>(fmt::format("Exception [{}] to get PrettyName for "
                                         "the given object path [{}]",
+                                        e.what(), objPath.str)
+                                .c_str());
+        return false;
+    }
+}
+
+IsItIsoHwInvPath
+    itemLocationCode(sdbusplus::bus::bus& bus,
+                     const sdbusplus::message::object_path& objPath,
+                     const UniqueHwId& locCode)
+{
+    if (!std::holds_alternative<type::LocationCode>(locCode))
+    {
+        // Should not happen, could be wrong lookup function
+        return false;
+    }
+
+    try
+    {
+        auto expandedLocCode = utils::getDBusPropertyVal<std::string>(
+            bus, objPath,
+            "xyz.openbmc_project.Inventory.Decorator.LocationCode",
+            "LocationCode");
+
+        auto unExpandedLocCode{devtree::getUnexpandedLocCode(expandedLocCode)};
+        if (!unExpandedLocCode.has_value())
+        {
+            return false;
+        }
+
+        return *unExpandedLocCode == std::get<type::LocationCode>(locCode);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        log<level::WARNING>(fmt::format("Exception [{}] to get LocationCode "
+                                        "for the given object path [{}]",
                                         e.what(), objPath.str)
                                 .c_str());
         return false;
