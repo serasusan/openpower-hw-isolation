@@ -15,6 +15,8 @@ using namespace phosphor::logging;
 namespace isolatable_hws
 {
 
+constexpr auto CommonInventoryItemIface = "xyz.openbmc_project.Inventory.Item";
+
 IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
 {
     /**
@@ -52,8 +54,7 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
 
         // Processor Subunits
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "eq"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "eq"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Quad")},
@@ -75,110 +76,127 @@ IsolatableHWs::IsolatableHWs(sdbusplus::bus::bus& bus) : _bus(bus)
 
         // In BMC inventory, ECO mode core is modeled as a subunit since it
         // is not the normal core
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "core"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "core"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Cache-Only Core")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "mc"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "mc"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "Memory Controller")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "mi"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "mi"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Processor To Memory Buffer Interface")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "mcc"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "mcc"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Memory Controller Channel")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "omi"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "omi"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "OpenCAPI Memory Interface")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "pauc"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "pauc"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "POWER Accelerator Unit Controller")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "pau"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "pau"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "POWER Accelerator Unit")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "omic"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "omic"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "OpenCAPI Memory Interface Controller")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "iohs"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "iohs"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "High speed SMP/OpenCAPI Link")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "smpgroup"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "smpgroup"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "OBUS End Point")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "pec"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "pec"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "PCI Express controllers")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "phb"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "phb"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::chipUnitPos,
              inv_path_lookup_func::itemPrettyName, "PCIe host bridge (PHB)")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "nmmu"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "nmmu"),
          IsolatableHWs::HW_Details(!ItIsFRU, processorHwId,
                                    devtree::lookup_func::chipUnitPos,
                                    inv_path_lookup_func::itemPrettyName,
                                    "Nest Memory Management Unit")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "nx"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "nx"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, processorHwId, devtree::lookup_func::mruId,
              inv_path_lookup_func::itemPrettyName, "Accelerator")},
 
         // Memory (aka DIMM) subunits
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "ocmb"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "ocmb"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, dimmHwId, devtree::lookup_func::pdbgIndex,
              inv_path_lookup_func::itemPrettyName, "OpenCAPI Memory Buffer")},
 
-        {IsolatableHWs::HW_Details::HwId("xyz.openbmc_project.Inventory.Item",
-                                         "mem_port"),
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "mem_port"),
          IsolatableHWs::HW_Details(
              !ItIsFRU, dimmHwId, devtree::lookup_func::pdbgIndex,
              inv_path_lookup_func::itemPrettyName, "DDR Memory Port")},
+
+        // ADC and GPIO Expander are Generic I2C Device
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "adc"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Control Device")},
+
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface,
+                                         "gpio_expander"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Control Device")},
+
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "pmic"),
+         IsolatableHWs::HW_Details(!ItIsFRU, dimmHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Onboard Memory Power Management IC")},
+
+        // Motherboard subunits
+
+        /**
+         * The oscrefclk parent fru is not modelled in the phal cec device tree
+         * so using the temporary workaround (refer getClkParentFruObjPath())
+         * instead of defining the isolatable hardwares list.
+         */
+        {IsolatableHWs::HW_Details::HwId(CommonInventoryItemIface, "oscrefclk"),
+         IsolatableHWs::HW_Details(!ItIsFRU, emptyHwId,
+                                   devtree::lookup_func::pdbgIndex,
+                                   inv_path_lookup_func::itemPrettyName,
+                                   "Oscillator Reference Clock")},
     };
 }
 
@@ -590,16 +608,31 @@ std::optional<struct pdbg_target*>
     std::string fruUnitPdbgClass{pdbg_target_class_name(devTreeTgt)};
 
     struct pdbg_target* parentFruTarget = nullptr;
-    if ((fruUnitPdbgClass == "ocmb") || (fruUnitPdbgClass == "mem_port"))
+    if ((fruUnitPdbgClass == "ocmb") || (fruUnitPdbgClass == "mem_port") ||
+        (fruUnitPdbgClass == "adc") || (fruUnitPdbgClass == "gpio_expander") ||
+        (fruUnitPdbgClass == "pmic"))
     {
         /**
-         * FIXME: The assumption is, dimm is parent fru for "ocmb" and
-         *        "mem_port" and each "ocmb" or "mem_port" will have one
-         *        "dimm" so if something is changed then need to fix
-         *        this logic.
+         * FIXME: The assumption is, dimm is parent fru for "ocmb", "mem_port",
+         *        "adc", "gpio_expander", and "pmic" units and those units
+         *        will have only one "dimm" so if something is changed then,
+         *        need to fix this logic.
          * @note  In phal cec device tree dimm is placed under ocmb->mem_port
          *        based on dimm pervasive path.
          */
+        if ((fruUnitPdbgClass == "adc") ||
+            (fruUnitPdbgClass == "gpio_expander") ||
+            (fruUnitPdbgClass == "pmic"))
+        {
+            /**
+             * The "adc", "gpio_expander", and "pmic" units are placed under
+             * ocmb but, dimm is placed under the ocmb so, we need to get the
+             * parent ocmb for the given "adc", "gpio_expander", and "pmic"
+             * units to get the dimm fru target.
+             */
+            devTreeTgt = pdbg_target_parent("ocmb", devTreeTgt);
+        }
+
         auto dimmCount = 0;
         struct pdbg_target* lastDimmTgt = nullptr;
         pdbg_for_each_target("dimm", devTreeTgt, lastDimmTgt)
@@ -753,6 +786,119 @@ std::optional<sdbusplus::message::object_path>
     }
 }
 
+std::optional<sdbusplus::message::object_path>
+    IsolatableHWs::getClkParentFruObjPath(struct pdbg_target* clkTgt)
+{
+    auto clkTgtDevTreePath{pdbg_target_path(clkTgt)};
+
+    constexpr auto MotherboardIface =
+        "xyz.openbmc_project.Inventory.Item.Board.Motherboard";
+    auto parentFruPath = getChildsInventoryPath(
+        std::string("/xyz/openbmc_project/inventory"), MotherboardIface);
+
+    if (!parentFruPath.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Failed to get the parent fru [{}] inventory path "
+                        "for the given device path [{}]",
+                        MotherboardIface, clkTgtDevTreePath)
+                .c_str());
+        return std::nullopt;
+    }
+    else if (parentFruPath->empty())
+    {
+        log<level::ERR>(
+            fmt::format("The parent fru [{}] inventory object is not exist "
+                        "for the given device path [{}]",
+                        MotherboardIface, clkTgtDevTreePath)
+                .c_str());
+        return std::nullopt;
+    }
+    else if (parentFruPath->size() > 1)
+    {
+        log<level::ERR>(
+            fmt::format("More than one parent fru [{}] inventory object is "
+                        "exists for the given device path [{}]",
+                        MotherboardIface, clkTgtDevTreePath)
+                .c_str());
+        return std::nullopt;
+    }
+
+    return (*parentFruPath)[0];
+}
+
+std::optional<sdbusplus::message::object_path>
+    IsolatableHWs::getParentFruObjPath(struct pdbg_target* childTgt)
+{
+    if (childTgt == nullptr)
+    {
+        log<level::ERR>(
+            "Given pdbg target is invalid, failed to get parent fru path");
+        return std::nullopt;
+    }
+
+    auto childTgtDevTreePath{pdbg_target_path(childTgt)};
+
+    auto pdbgTgtClass{pdbg_target_class_name(childTgt)};
+    if (pdbgTgtClass == nullptr)
+    {
+        log<level::ERR>(
+            fmt::format("The given hardware [{}] pdbg target class is missing, "
+                        "please make sure hardware unit is added in the pdbg",
+                        childTgtDevTreePath)
+                .c_str());
+        return std::nullopt;
+    }
+
+    /**
+     * Temporary workaround to get the parent fru path for the oscrefclk
+     * because the oscrefclk parent fru is not modelled in the phal
+     * cec device tree.
+     */
+    if (std::strcmp(pdbgTgtClass, "oscrefclk") == 0)
+    {
+        return getClkParentFruObjPath(childTgt);
+    }
+
+    auto parentFruTgt = getParentFruPhalDevTreeTgt(childTgt);
+    if (!parentFruTgt.has_value())
+    {
+        return std::nullopt;
+    }
+
+    std::string parentFruTgtPdbgClass{pdbg_target_class_name(*parentFruTgt)};
+    auto parentFruHwId = IsolatableHWs::HW_Details::HwId{
+        IsolatableHWs::HW_Details::HwId::PhalPdbgClassName(
+            parentFruTgtPdbgClass)};
+
+    auto parentFruHwDetails = getIsotableHWDetails(parentFruHwId);
+    if (!parentFruHwDetails.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Isolated hardware [{}] parent fru pdbg class [{}] is "
+                        "not found in the isolatable hardware list",
+                        childTgtDevTreePath, parentFruTgtPdbgClass)
+                .c_str());
+        return std::nullopt;
+    }
+
+    auto parentFruHwInfo = devtree::getFRUDetails(*parentFruTgt);
+
+    auto parentFruPath = getFRUInventoryPath(
+        parentFruHwInfo, parentFruHwDetails->second._invPathFuncLookUp);
+    if (!parentFruPath.has_value())
+    {
+        log<level::ERR>(
+            fmt::format("Failed to get get parent fru inventory path "
+                        "for given device path [{}]",
+                        childTgtDevTreePath)
+                .c_str());
+        return std::nullopt;
+    }
+
+    return parentFruPath;
+}
+
 std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
     const devtree::DevTreePhysPath& physicalPath)
 {
@@ -837,41 +983,9 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
         }
         else
         {
-            auto parentFruTgt = getParentFruPhalDevTreeTgt(*isolatedHwTgt);
-            if (!parentFruTgt.has_value())
-            {
-                return std::nullopt;
-            }
-
-            std::string parentFruTgtPdbgClass =
-                pdbg_target_class_name(*parentFruTgt);
-            auto parentFruHwId = IsolatableHWs::HW_Details::HwId{
-                IsolatableHWs::HW_Details::HwId::PhalPdbgClassName(
-                    parentFruTgtPdbgClass)};
-
-            auto parentFruHwDetails = getIsotableHWDetails(parentFruHwId);
-            if (!parentFruHwDetails.has_value())
-            {
-                log<level::ERR>(
-                    fmt::format(
-                        "Isolated hardware [{}] parent fru pdbg "
-                        "class [{}] is not found in isolatable hardware list",
-                        isolatedHwTgtDevTreePath, parentFruTgtPdbgClass)
-                        .c_str());
-                return std::nullopt;
-            }
-
-            auto parentFruHwInfo = devtree::getFRUDetails(*parentFruTgt);
-
-            auto parentFruPath = getFRUInventoryPath(
-                parentFruHwInfo, parentFruHwDetails->second._invPathFuncLookUp);
+            auto parentFruPath = getParentFruObjPath(*isolatedHwTgt);
             if (!parentFruPath.has_value())
             {
-                log<level::ERR>(
-                    fmt::format("Failed to get get parent fru inventory path "
-                                "for given device path [{}]",
-                                isolatedHwTgtDevTreePath)
-                        .c_str());
                 return std::nullopt;
             }
 
@@ -882,47 +996,49 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                 return std::nullopt;
             }
 
-            InstanceId isolateHwInstId;
-            // TODO Below decision need to be based on system core mode
-            //     i.e whether need to use "fc" (in big core system) or
-            //     "core" (in small core system) pdbg target class to get
-            //     the appropriate target physical path from the phal
-            //     cec device tree but, now using the "fc".
-            if (isolatedHwPdbgClass == "core")
-            {
-                struct pdbg_target* parentFc =
-                    pdbg_target_parent("fc", *isolatedHwTgt);
-                if (parentFc == nullptr)
-                {
-                    log<level::ERR>(
-                        fmt::format("Failed to get the parent FC target for "
-                                    "the given device tree target path [{}]",
-                                    isolatedHwTgtDevTreePath)
-                            .c_str());
-                    return std::nullopt;
-                }
-                isolateHwInstId = devtree::getHwInstIdFromDevTree(parentFc);
-            }
-            else
-            {
-                isolateHwInstId =
-                    devtree::getHwInstIdFromDevTree(*isolatedHwTgt);
-            }
-
             /**
-             * If PrettyName is not empty then use that as unique hardware id
-             * because currently few isolatbale hardware subunits is not
-             * modelled in BMC Inventory and Redfish so these subunits
-             * need to look based on PrettyName to get inventory path.
+             * If the isolated hardware inventory item interface is
+             * CommonInventoryItemIface ("xyz.openbmc_project.Inventory.Item")
+             * then, use PrettyName as unique hardware id because currently
+             * few isolatbale hardware subunits is not modelled in the BMC
+             * Inventory and Redfish so those subunits need to look based on
+             * the PrettyName to get inventory path.
              */
             inv_path_lookup_func::UniqueHwId uniqIsolateHwKey;
-            if (!isolatedHwDetails->second._prettyName.empty())
+            if (isolatedHwDetails->first._interfaceName._name ==
+                CommonInventoryItemIface)
             {
                 uniqIsolateHwKey = isolatedHwDetails->second._prettyName;
             }
             else
             {
-                uniqIsolateHwKey = isolateHwInstId;
+                // TODO Below decision need to be based on system core mode
+                //     i.e whether need to use "fc" (in big core system) or
+                //     "core" (in small core system) pdbg target class to get
+                //     the appropriate target physical path from the phal
+                //     cec device tree but, now using the "fc".
+                if (isolatedHwPdbgClass == "core")
+                {
+                    struct pdbg_target* parentFc =
+                        pdbg_target_parent("fc", *isolatedHwTgt);
+                    if (parentFc == nullptr)
+                    {
+                        log<level::ERR>(
+                            fmt::format("Failed to get the parent FC "
+                                        "target for the given device tree "
+                                        "target path [{}]",
+                                        isolatedHwTgtDevTreePath)
+                                .c_str());
+                        return std::nullopt;
+                    }
+                    uniqIsolateHwKey =
+                        devtree::getHwInstIdFromDevTree(parentFc);
+                }
+                else
+                {
+                    uniqIsolateHwKey =
+                        devtree::getHwInstIdFromDevTree(*isolatedHwTgt);
+                }
             }
 
             auto isolateHwPath = std::find_if(
