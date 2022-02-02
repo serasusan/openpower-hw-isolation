@@ -364,10 +364,11 @@ void Manager::restore()
     openpower_guard::GuardRecords records = openpower_guard::getAll();
 
     std::for_each(records.begin(), records.end(), [this](const auto& record) {
-        // Skipping fake record (GARD_Reconfig) because,
-        // fake record is created for internal purpose to
-        // to use by BMC and Hostboot
-        if (record.errType == openpower_guard::GardType::GARD_Reconfig)
+        // Skipping ephemeral records (GARD_Reconfig and GARD_Sticky_deconfig
+        // because those type records are created for internal purpose to use
+        // by BMC and Hostboot
+        if (record.errType == openpower_guard::GardType::GARD_Reconfig ||
+            record.errType == openpower_guard::GardType::GARD_Sticky_deconfig)
         {
             return;
         }
@@ -394,9 +395,11 @@ void Manager::handleHostIsolatedHardwares()
     }
 
     std::for_each(records.begin(), records.end(), [this](const auto& record) {
-        // Skipping fake record (GARD_Reconfig) because, fake record is
-        // created for internal purposes to use by BMC and Hostboot.
-        if (record.errType == openpower_guard::GardType::GARD_Reconfig)
+        // Skipping ephemeral records (GARD_Reconfig and GARD_Sticky_deconfig
+        // because those type records are created for internal purpose to use
+        // by BMC and Hostboot
+        if (record.errType == openpower_guard::GardType::GARD_Reconfig ||
+            record.errType == openpower_guard::GardType::GARD_Sticky_deconfig)
         {
             return;
         }
