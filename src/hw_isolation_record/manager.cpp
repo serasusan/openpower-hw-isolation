@@ -648,6 +648,8 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
         updated = true;
     }
 
+    utils::setEnabledProperty(_bus, *isolatedHwInventoryPath, false);
+
     if (updated)
     {
         // Existing entry might be overwritten if that's meets certain
