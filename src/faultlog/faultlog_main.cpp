@@ -1,4 +1,5 @@
 #include <guard_with_eid_records.hpp>
+#include <guard_without_eid_records.hpp>
 #include <libguard/guard_interface.hpp>
 #include <libguard/include/guard_record.hpp>
 #include <nlohmann/json.hpp>
@@ -36,6 +37,7 @@ int main(int /*arg*/, char** /*argv*/)
         }
 
         GuardWithEidRecords::populate(bus, unresolvedRecords, faultLogJson);
+        GuardWithoutEidRecords::populate(unresolvedRecords, faultLogJson);
         std::cout << faultLogJson.dump(2) << std::endl;
     }
     catch (const std::exception& e)

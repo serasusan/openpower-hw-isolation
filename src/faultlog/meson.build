@@ -36,6 +36,7 @@ faultlog_sources = [
         'faultlog_main.cpp',
         'guard_with_eid_records.cpp',
         'util.cpp',
+        'guard_without_eid_records.cpp'
         ]
 
 faultlog_dependencies = [ 

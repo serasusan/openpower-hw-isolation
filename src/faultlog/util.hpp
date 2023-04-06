@@ -43,6 +43,14 @@ T readProperty(sdbusplus::bus::bus& bus, const std::string& service,
     return retVal;
 }
 
+/**
+ * @brief get the guard reason for the specified physical path
+ *        of the pdbg target
+ * @param[in] guardRecords - guard records
+ * @param[in] path - physical path of the pdbg target
+ *
+ * @return guard reason stored as part of the guard record
+ */
 std::string getGuardReason(const GuardRecords& guardRecords,
                            const std::string& path);
 
