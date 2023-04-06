@@ -4,6 +4,7 @@
 #include <libguard/include/guard_record.hpp>
 #include <nlohmann/json.hpp>
 #include <sdbusplus/bus.hpp>
+#include <faultlog_policy.hpp>
 
 #include <iostream>
 
@@ -38,6 +39,7 @@ int main(int /*arg*/, char** /*argv*/)
 
         GuardWithEidRecords::populate(bus, unresolvedRecords, faultLogJson);
         GuardWithoutEidRecords::populate(unresolvedRecords, faultLogJson);
+        FaultLogPolicy::populate(bus, faultLogJson);
         std::cout << faultLogJson.dump(2) << std::endl;
     }
     catch (const std::exception& e)
