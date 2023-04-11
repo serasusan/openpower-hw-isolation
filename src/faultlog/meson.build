@@ -37,7 +37,8 @@ faultlog_sources = [
         'guard_with_eid_records.cpp',
         'util.cpp',
         'guard_without_eid_records.cpp',
-        'faultlog_policy.cpp'
+        'faultlog_policy.cpp',
+        'unresolved_pels.cpp'
         ]
 
 faultlog_dependencies = [ 

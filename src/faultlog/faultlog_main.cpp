@@ -1,10 +1,11 @@
+#include <faultlog_policy.hpp>
 #include <guard_with_eid_records.hpp>
 #include <guard_without_eid_records.hpp>
 #include <libguard/guard_interface.hpp>
 #include <libguard/include/guard_record.hpp>
 #include <nlohmann/json.hpp>
 #include <sdbusplus/bus.hpp>
-#include <faultlog_policy.hpp>
+#include <unresolved_pels.hpp>
 
 #include <iostream>
 
@@ -40,6 +41,7 @@ int main(int /*arg*/, char** /*argv*/)
         GuardWithEidRecords::populate(bus, unresolvedRecords, faultLogJson);
         GuardWithoutEidRecords::populate(unresolvedRecords, faultLogJson);
         FaultLogPolicy::populate(bus, faultLogJson);
+        UnresolvedPELs::populate(bus, unresolvedRecords, faultLogJson);
         std::cout << faultLogJson.dump(2) << std::endl;
     }
     catch (const std::exception& e)
