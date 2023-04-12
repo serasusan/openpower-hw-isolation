@@ -1,3 +1,4 @@
+#include <deconfig_records.hpp>
 #include <faultlog_policy.hpp>
 #include <guard_with_eid_records.hpp>
 #include <guard_without_eid_records.hpp>
@@ -37,11 +38,11 @@ int main(int /*arg*/, char** /*argv*/)
                 unresolvedRecords.emplace_back(elem);
             }
         }
-
         GuardWithEidRecords::populate(bus, unresolvedRecords, faultLogJson);
         GuardWithoutEidRecords::populate(unresolvedRecords, faultLogJson);
         FaultLogPolicy::populate(bus, faultLogJson);
         UnresolvedPELs::populate(bus, unresolvedRecords, faultLogJson);
+        DeconfigRecords::populate(faultLogJson);
         std::cout << faultLogJson.dump(2) << std::endl;
     }
     catch (const std::exception& e)
