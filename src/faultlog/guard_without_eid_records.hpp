@@ -24,6 +24,12 @@ class GuardWithoutEidRecords
     ~GuardWithoutEidRecords() = delete;
 
   public:
+    /** @brief Get count of guard records without associated error log objects
+     *
+     *  @param[in] guardRecords - Guard records
+     */
+    static int getCount(GuardRecords& guardRecords);
+
     /** @brief Captured deconfig data in NAG JSON file
      *
      *  @param[in] guardRecords - Guard records

@@ -72,6 +72,13 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
     return 0;
 }
 
+int DeconfigRecords::getCount()
+{
+    DeconfigDataList deconfigList;
+    pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
+    return static_cast<int>(deconfigList.targetList.size());
+}
+
 void DeconfigRecords::populate(nlohmann::json& jsonNag)
 {
     DeconfigDataList deconfigList;

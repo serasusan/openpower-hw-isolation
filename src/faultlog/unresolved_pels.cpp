@@ -4,6 +4,7 @@
 #include <phosphor-logging/log.hpp>
 #include <unresolved_pels.hpp>
 #include <util.hpp>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 extern "C"
 {
@@ -53,8 +54,131 @@ static int getGuardedTarget(struct pdbg_target* target, void* priv)
     return 0;
 }
 
+int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus)
+{
+    int count = 0;
+    try
+    {
+        Objects objects;
+        auto method = bus.new_method_call(
+            "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
+            "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
+        auto reply = bus.call(method);
+        reply.read(objects);
+        for (const auto& [path, interfaces] : objects)
+        {
+            bool resolved = true;
+            uint32_t id = 0;
+            std::string severity =
+                "xyz.openbmc_project.Logging.Entry.Level.Informational";
+            for (const auto& [intf, properties] : interfaces)
+            {
+                if (intf != "xyz.openbmc_project.Logging.Entry")
+                {
+                    continue;
+                }
+                for (const auto& [prop, propValue] : properties)
+                {
+                    if (prop == "Id")
+                    {
+                        auto idPtr = std::get_if<uint32_t>(&propValue);
+                        if (idPtr != nullptr)
+                        {
+                            id = *idPtr;
+                        }
+                    }
+                    else if (prop == "Resolved")
+                    {
+                        auto resolvedPtr = std::get_if<bool>(&propValue);
+                        if (resolvedPtr != nullptr)
+                        {
+                            resolved = *resolvedPtr;
+                        }
+                    }
+                    else if (prop == "Severity")
+                    {
+                        auto severityPtr = std::get_if<std::string>(&propValue);
+                        if (severityPtr != nullptr)
+                        {
+                            severity = *severityPtr;
+                        }
+                    }
+                }
+                break;
+            }
+            if (resolved == true)
+            {
+                continue;
+            }
+
+            // ign re informational and debug errors
+            if ((severity == "xyz.openbmc_project.Logging.Entry.Level.Debug") ||
+                (severity ==
+                 "xyz.openbmc_project.Logging.Entry.Level.Informational") ||
+                (severity == "xyz.openbmc_project.Logging.Entry.Level.Notice"))
+            {
+                continue;
+            }
+
+            // get pel json file
+            std::string pel;
+            auto method2 = bus.new_method_call(
+                "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
+                "org.open_power.Logging.PEL", "GetPELJSON");
+            method2.append(id);
+            auto resp2 = bus.call(method2);
+            resp2.read(pel);
+            json pelJson = std::move(json::parse(pel));
+
+            bool deconfigured = false;
+            json& primarySRC = pelJson["Primary SRC"];
+            if (primarySRC.contains("Deconfigured") &&
+                !primarySRC["Deconfigured"].is_null())
+            {
+                if (primarySRC["Deconfigured"] == "True")
+                {
+                    deconfigured = true;
+                }
+            }
+            if (deconfigured == false)
+            {
+                continue;
+            }
+
+            bool guarded = false;
+            if (primarySRC.contains("Guarded") &&
+                !primarySRC["Guarded"].is_null())
+            {
+                if (primarySRC["Guarded"] == "True")
+                {
+                    guarded = true;
+                }
+            }
+            if (guarded == true)
+            {
+                continue; // will be captured as part of guard records
+            }
+            count += 1;
+        }
+    }
+    catch (
+        const sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument&
+            ex)
+    {
+        lg2::info("PEL might be deleted but entry is around {ERROR}", "ERROR",
+                  ex.what());
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Failed to get count of unresolved pels with deconfig bit "
+                   "set {ERROR}",
+                   "ERROR", ex.what());
+    }
+    return count;
+}
+
 void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
-                              GuardRecords& guardRecords, json& jsonNag)
+                              const GuardRecords& guardRecords, json& jsonNag)
 {
     try
     {
@@ -234,6 +358,13 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             jsonServiceEvent["SERVICABLE_EVENT"] = std::move(jsonErrlogObj);
             jsonNag.push_back(std::move(jsonServiceEvent));
         }
+    }
+    catch (
+        const sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument&
+            ex)
+    {
+        lg2::info("PEL might be deleted but entry is around {ERROR}", "ERROR",
+                  ex.what());
     }
     catch (const std::exception& ex)
     {

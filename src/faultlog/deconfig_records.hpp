@@ -23,7 +23,13 @@ class DeconfigRecords
     ~DeconfigRecords() = delete;
 
   public:
-    /** @brief Poupulate target details that have deconfiguredByEid set
+    /** @brief Get deconfigured records count by parsing through pdbg targets
+     *
+     *  @return 0 if no records are found else count of records
+     */
+    static int getCount();
+
+    /** @brief Populate target details that have deconfiguredByEid set
      *
      *  @param[in] jsonNag - Update JSON deconfigure records
      */

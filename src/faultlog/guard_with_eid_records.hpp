@@ -25,6 +25,14 @@ class GuardWithEidRecords
     ~GuardWithEidRecords() = delete;
 
   public:
+    /** @brief Get guard records with associated error log count
+     *
+     *  @param[in] guardRecords - hardware isolated records to parse
+     *
+     *  @return 0 if no records are found else count of records
+     */
+    static int getCount(const GuardRecords& guardRecords);
+
     /** @brief Populate permanent hardware errors to NAG json file
      *
      *  @param[in] bus - D-Bus to attach to

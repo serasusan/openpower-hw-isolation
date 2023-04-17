@@ -53,6 +53,22 @@ static int getGuardedTarget(struct pdbg_target* target, void* priv)
     }
     return 0;
 }
+
+int GuardWithEidRecords::getCount(const GuardRecords& guardRecords)
+{
+    int count = 0;
+    for (const auto& elem : guardRecords)
+    {
+        // ignore manual guard records
+        if (elem.elogId == 0)
+        {
+            continue;
+        }
+        count += 1;
+    }
+    return count;
+}
+
 void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                                    const GuardRecords& guardRecords,
                                    json& jsonNag)

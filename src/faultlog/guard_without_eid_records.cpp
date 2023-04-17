@@ -73,6 +73,28 @@ static int guardedTargets(struct pdbg_target* target, void* priv)
     return 0;
 }
 
+int GuardWithoutEidRecords::getCount(GuardRecords& guardRecords)
+{
+    int count = 0;
+    for (const auto& elem : guardRecords)
+    {
+        if (elem.elogId != 0)
+        {
+            // only cater guards without a PEL
+            continue;
+        }
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            lg2::error("Failed to get physical path for record {RECORD_ID}",
+                       "RECORD_ID", elem.recordId);
+            continue;
+        }
+        count += 1;
+    }
+    return count;
+}
+
 void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
                                       nlohmann::json& jsonNag)
 {
