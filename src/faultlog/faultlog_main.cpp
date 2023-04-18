@@ -10,8 +10,10 @@
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
 #include <unresolved_pels.hpp>
+#include <util.hpp>
 
 #include <iostream>
+#include <vector>
 
 using namespace openpower::faultlog;
 using ::nlohmann::json;
@@ -21,6 +23,8 @@ using ::openpower::guard::GuardRecords;
 
 using Severity = sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level;
 
+using Binary = std::vector<uint8_t>;
+using PropVariant = sdbusplus::utility::dedup_variant_t<Binary>;
 int main(int argc, char** argv)
 {
     try
@@ -33,6 +37,30 @@ int main(int argc, char** argv)
         auto bus = sdbusplus::bus::new_default();
 
         nlohmann::json faultLogJson = json::array();
+
+        std::string propVal{};
+        try
+        {
+            auto retVal = readProperty<PropVariant>(
+                bus, "xyz.openbmc_project.Inventory.Manager",
+                "/xyz/openbmc_project/inventory/system/chassis/motherboard",
+                "com.ibm.ipzvpd.VSYS", "TM");
+            if (auto pVal = std::get_if<Binary>(&retVal))
+            {
+                propVal.assign(reinterpret_cast<const char*>(pVal->data()),
+                               pVal->size());
+            }
+        }
+        catch (const std::exception& ex)
+        {
+            std::cout << "failed to get system type " << std::endl;
+        }
+        nlohmann::json system;
+        system["SYSTEM_TYPE"] = propVal;
+
+        nlohmann::json systemHdr;
+        systemHdr["SYSTEM"] = std::move(system);
+        faultLogJson.push_back(systemHdr);
 
         openpower::guard::libguard_init();
         // Don't get ephemeral records because those type records are not
