@@ -60,3 +60,4 @@ executable('faultlog',
            install : true
           )
 
+subdir('service')

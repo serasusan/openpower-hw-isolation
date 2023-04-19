@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodic faultlog timer to run once every month
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1mon
+Unit=faultlog_bmcboot.service
+
+[Install]
+WantedBy=timers.target
