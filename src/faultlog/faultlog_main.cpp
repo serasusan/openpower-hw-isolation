@@ -82,7 +82,7 @@ void createNagPel(sdbusplus::bus::bus& bus,
  */
 void propertyChanged(sdbusplus::bus::bus& bus,
                      const GuardRecords& unresolvedRecords,
-                     const sdbusplus::message::message& msg)
+                     sdbusplus::message::message& msg)
 {
     using ProgressStages = sdbusplus::xyz::openbmc_project::State::Boot::
         server::Progress::ProgressStages;
