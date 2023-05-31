@@ -3,11 +3,12 @@
 #include <libguard/include/guard_record.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
-using ::openpower::guard::GuardRecords;
+#include <xyz/openbmc_project/State/Boot/Progress/server.hpp>
+#include <xyz/openbmc_project/State/Host/server.hpp>
 
 namespace openpower::faultlog
 {
-
+using ::openpower::guard::GuardRecords;
 /**
  * @brief Read property value from the specified object and interface
  * @param[in] bus D-Bus handle
@@ -54,4 +55,19 @@ T readProperty(sdbusplus::bus::bus& bus, const std::string& service,
 std::string getGuardReason(const GuardRecords& guardRecords,
                            const std::string& path);
 
+/**
+ * @brief Return true if host completed IPL and reached runtime
+ * @param[in] bus - D-Bus handle
+ *
+ * @return true if in runtime else false
+ */
+bool isHostProgressStateRunning(sdbusplus::bus::bus& bus);
+
+/**
+ * @brief Return true if host started running
+ * @param[in] bus - D-Bus handle
+ *
+ * @return true if host started
+ */
+bool isHostStateRunning(sdbusplus::bus::bus& bus);
 } // namespace openpower::faultlog
