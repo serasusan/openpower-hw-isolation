@@ -4,7 +4,6 @@
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <util.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
 
 extern "C"
 {
@@ -26,7 +25,7 @@ struct GuardedTarget
     GuardedTarget(const std::string& path) : phyDevPath(path)
     {}
 };
-using ::sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument;
+
 using PropertyValue =
     std::variant<std::string, bool, uint8_t, int16_t, uint16_t, int32_t,
                  uint32_t, int64_t, uint64_t, double>;
@@ -231,7 +230,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             jsonServiceEvent["SERVICABLE_EVENT"] = std::move(jsonErrlogObj);
             jsonNag.push_back(std::move(jsonServiceEvent));
         }
-        catch (const InvalidArgument& ex)
+        catch (const sdbusplus::exception::SdBusError& ex)
         {
             lg2::info(
                 "PEL might be deleted but guard entry is around {ELOG_ID)",
