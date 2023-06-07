@@ -136,10 +136,9 @@ std::string epochTimeToBCD(uint64_t milliSeconds)
 
 json parseCallout(const std::string callout)
 {
-    json callouthdrJson = json::object();
     if (callout.empty())
     {
-        return callouthdrJson;
+        return json::object();
     }
 
     // lambda method to split the string based on delimiter

@@ -87,31 +87,45 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             {
                 continue;
             }
-            uint32_t bmcLogId;
-            auto method = bus.new_method_call(
-                "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
-                "org.open_power.Logging.PEL", "GetBMCLogIdFromPELId");
+            uint32_t bmcLogId = 0;
+            bool dbusErrorObjFound = true;
+            try
+            {
+                auto method = bus.new_method_call(
+                    "xyz.openbmc_project.Logging",
+                    "/xyz/openbmc_project/logging",
+                    "org.open_power.Logging.PEL", "GetBMCLogIdFromPELId");
 
-            method.append(static_cast<uint32_t>(elem.elogId));
-            auto resp = bus.call(method);
-            resp.read(bmcLogId);
+                method.append(static_cast<uint32_t>(elem.elogId));
+                auto resp = bus.call(method);
+                resp.read(bmcLogId);
+            }
+            catch (const sdbusplus::exception::SdBusError& ex)
+            {
+                dbusErrorObjFound = false;
+                lg2::info(
+                    "PEL might be deleted but guard entry is around {ELOG_ID)",
+                    "ELOG_ID", elem.elogId);
+            }
 
             json jsonErrorLog = json::object();
-            uint32_t plid = 0;
-            uint64_t timestamp = 0;
-            std::string callouts;
-            std::string refCode;
-
-            std::string objPath = "/xyz/openbmc_project/logging/entry/" +
-                                  std::to_string(bmcLogId);
-
-            // xyz.openbmc_project.Logging.Entry
+            json jsonErrorLogSection = json::array();
+            if (dbusErrorObjFound)
             {
+                uint32_t plid = 0;
+                uint64_t timestamp = 0;
+                std::string callouts;
+                std::string refCode;
+
+                std::string objPath = "/xyz/openbmc_project/logging/entry/" +
+                                      std::to_string(bmcLogId);
+
                 Properties properties;
                 auto method = bus.new_method_call(
                     "xyz.openbmc_project.Logging", objPath.c_str(),
                     "org.freedesktop.DBus.Properties", "GetAll");
                 method.append("xyz.openbmc_project.Logging.Entry");
+                method.append("org.open_power.Logging.PEL.Entry");
                 auto reply = bus.call(method);
                 reply.read(properties);
                 for (const auto& [prop, propValue] : properties)
@@ -133,20 +147,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                             iss >> refCode;
                         }
                     }
-                }
-            }
-            // org.open_power.Logging.PEL.Entry
-            {
-                Properties properties;
-                auto method = bus.new_method_call(
-                    "xyz.openbmc_project.Logging", objPath.c_str(),
-                    "org.freedesktop.DBus.Properties", "GetAll");
-                method.append("org.open_power.Logging.PEL.Entry");
-                auto reply = bus.call(method);
-                reply.read(properties);
-                for (const auto& [prop, propValue] : properties)
-                {
-                    if (prop == "PlatformLogID")
+                    else if (prop == "PlatformLogID")
                     {
                         auto plidPtr = std::get_if<uint32_t>(&propValue);
                         if (plidPtr != nullptr)
@@ -162,18 +163,15 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                             timestamp = *timestampPtr;
                         }
                     }
-                }
+                } // endfor
+                std::stringstream ss;
+                ss << std::hex << "0x" << plid;
+                jsonErrorLog["ERR_PLID"] = ss.str();
+                jsonErrorLog["Callout Section"] = parseCallout(callouts);
+                refCode.insert(0, "0x");
+                jsonErrorLog["SRC"] = refCode;
+                jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
             }
-            std::stringstream ss;
-            ss << std::hex << "0x" << plid;
-            jsonErrorLog["ERR_PLID"] = ss.str();
-            jsonErrorLog["Callout Section"] = parseCallout(callouts);
-            refCode.insert(0, "0x");
-            jsonErrorLog["SRC"] = refCode;
-            jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
-
-            json jsonErrorLogSection = json::array();
-            jsonErrorLogSection.push_back(std::move(jsonErrorLog));
 
             // add resource actions section
             auto physicalPath =
@@ -207,18 +205,32 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             }
             jsonResource["CURRENT_STATE"] = std::move(state);
 
-            ATTR_LOCATION_CODE_Type attrLocCode;
-            if (!DT_GET_PROP(ATTR_LOCATION_CODE, guardedTarget.target,
-                             attrLocCode))
-            {
-                jsonResource["LOCATION_CODE"] = attrLocCode;
-            }
-
             jsonResource["REASON_DESCRIPTION"] =
                 getGuardReason(guardRecords, *physicalPath);
 
             jsonResource["GARD_RECORD"] = true;
 
+            // error object is deleted add what ever data is found
+            if (!dbusErrorObjFound)
+            {
+                json jsonCallout = json::object();
+                json sectionJson = json::object();
+                ATTR_LOCATION_CODE_Type attrLocCode;
+                if (!DT_GET_PROP(ATTR_LOCATION_CODE, guardedTarget.target,
+                                 attrLocCode))
+                {
+                    jsonCallout["Location Code"] = attrLocCode;
+                    sectionJson["Callout Count"] = 1;
+                }
+                sectionJson["Callouts"] = jsonCallout;
+                jsonErrorLog["ERR_PLID"] =
+                    std::to_string(hwasState.deconfiguredByEid);
+                jsonErrorLog["Callout Section"] = sectionJson;
+                jsonErrorLog["SRC"] = 0;
+                jsonErrorLog["DATE_TIME"] = "00/00/0000 00:00:00";
+            }
+
+            jsonErrorLogSection.push_back(std::move(jsonErrorLog));
             json jsonEventData = json::object();
             jsonEventData["RESOURCE_ACTIONS"] = std::move(jsonResource);
             jsonErrorLogSection.push_back(jsonEventData);
@@ -230,16 +242,10 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             jsonServiceEvent["SERVICABLE_EVENT"] = std::move(jsonErrlogObj);
             jsonNag.push_back(std::move(jsonServiceEvent));
         }
-        catch (const sdbusplus::exception::SdBusError& ex)
-        {
-            lg2::info(
-                "PEL might be deleted but guard entry is around {ELOG_ID)",
-                "ELOG_ID", elem.elogId);
-        }
         catch (const std::exception& ex)
         {
-            lg2::info("Failed to add guard records {ELOG_ID}, {ERROR}",
-                      "ELOG_ID", elem.elogId, "ERROR", ex.what());
+            lg2::info("Failed to add guard record {ELOG_ID}, {ERROR}",
+                      "ELOG_ID", elem.elogId, "ERROR", ex);
         }
     }
 }
