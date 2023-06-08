@@ -451,7 +451,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             // add cec errorlog
             json jsonErrorLog = json::object();
             std::stringstream ss;
-            ss << std::hex << plid;
+            ss << std::hex << "0x" << plid;
             jsonErrorLog["ERR_PLID"] = ss.str();
             jsonErrorLog["Callout Section"] = parseCallout(callouts);
             refCode.insert(0, "0x");

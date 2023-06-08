@@ -140,8 +140,9 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
                 {
                     state = stateConfigured;
                 }
-                deconfigJson["PLID"] =
-                    std::to_string(hwasState.deconfiguredByEid);
+                std::stringstream ss;
+                ss << std::hex << "0x" << hwasState.deconfiguredByEid;
+                deconfigJson["PLID"] = ss.str();
             }
             deconfigJson["CURRENT_STATE"] = std::move(state);
 
