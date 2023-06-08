@@ -60,10 +60,6 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
                 }
                 default:
                 {
-                    lg2::info(
-                        "Ignoring deconfig target {TARGET} {DECONFIG_EID} ",
-                        "TARGET", pdbg_target_name(target), "DECONFIG_EID",
-                        static_cast<int>(hwasState.deconfiguredByEid));
                     break;
                 }
             }
