@@ -58,7 +58,7 @@ static int guardedTargets(struct pdbg_target* target, void* priv)
     ATTR_PHYS_DEV_PATH_Type phyPath;
     if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, phyPath))
     {
-        for (auto path : deconfig->pathList)
+        for (auto& path : deconfig->pathList)
         {
             if (strcmp(phyPath, path.c_str()) == 0)
             {
@@ -125,10 +125,13 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
         // traverse through all targets and get guarded targets list
         pdbg_target_traverse(nullptr, guardedTargets, &guardList);
 
-        for (auto target : guardList.targetList)
+        for (const auto& target : guardList.targetList)
         {
             json deconfigJson = json::object();
-            deconfigJson["TYPE"] = pdbg_target_name(target);
+            if (pdbg_target_name(target) != nullptr)
+            {
+                deconfigJson["TYPE"] = std::string(pdbg_target_name(target));
+            }
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, target, hwasState))
@@ -137,6 +140,8 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
                 {
                     state = stateConfigured;
                 }
+                deconfigJson["PLID"] =
+                    std::to_string(hwasState.deconfiguredByEid);
             }
             deconfigJson["CURRENT_STATE"] = std::move(state);
 
@@ -144,6 +149,14 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
             if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
             {
                 deconfigJson["PHYS_PATH"] = attrPhyDevPath;
+                deconfigJson["REASON_DESCRIPTION"] =
+                    getGuardReason(guardRecords, attrPhyDevPath);
+            }
+            else
+            {
+                // if physical path is not found do not add the record
+                // as it will be of no use
+                continue;
             }
 
             ATTR_LOCATION_CODE_Type attrLocCode;
@@ -151,10 +164,6 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
             {
                 deconfigJson["LOCATION_CODE"] = attrLocCode;
             }
-
-            deconfigJson["PLID"] = std::to_string(hwasState.deconfiguredByEid);
-            deconfigJson["REASON_DESCRIPTION"] =
-                getGuardReason(guardRecords, attrPhyDevPath);
 
             json header = json::object();
             header["DECONFIGURED"] = std::move(deconfigJson);

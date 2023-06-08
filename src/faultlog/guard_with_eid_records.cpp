@@ -193,7 +193,10 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                 continue;
             }
             json jsonResource = json::object();
-            jsonResource["TYPE"] = pdbg_target_name(guardedTarget.target);
+            if (pdbg_target_name(guardedTarget.target) != nullptr)
+            {
+                jsonResource["TYPE"] = pdbg_target_name(guardedTarget.target);
+            }
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target, hwasState))
