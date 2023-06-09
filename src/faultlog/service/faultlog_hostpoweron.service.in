@@ -17,7 +17,7 @@ Conflicts=obmc-host-stop@0.target
 
 [Service]
 ExecStart=@bindir@/faultlog -p
-Type=oneshot
+Type=simple
 SyslogIdentifier=faultlog
 
 [Install]
