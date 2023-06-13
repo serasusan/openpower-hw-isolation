@@ -305,13 +305,11 @@ int main(int argc, char** argv)
         // write faultlog json to stdout
         else if (listFaultlog)
         {
+            (void)FaultLogPolicy::populate(bus, faultLogJson);
             (void)GuardWithEidRecords::populate(bus, unresolvedRecords,
                                                 faultLogJson);
             (void)GuardWithoutEidRecords::populate(unresolvedRecords,
                                                    faultLogJson);
-
-            (void)FaultLogPolicy::populate(bus, faultLogJson);
-
             (void)UnresolvedPELs::populate(bus, unresolvedRecords, hostPowerOn,
                                            faultLogJson);
             (void)DeconfigRecords::populate(faultLogJson);
