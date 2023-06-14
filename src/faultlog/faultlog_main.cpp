@@ -40,17 +40,21 @@ void createNagPel(sdbusplus::bus::bus& bus,
     int manualGuardCount = GuardWithoutEidRecords::getCount(unresolvedRecords);
     int unresolvedPelsCount = UnresolvedPELs::getCount(bus, hostPowerOn);
     int deconfigCount = DeconfigRecords::getCount();
+    lg2::info(
+        "faultlog GUARD_COUNT: {GUARD_COUNT}, MAN_GUARD_COUNT: "
+        "{MAN_GUARD_COUNT}, "
+        "DECONFIG_REC_COUNT: {DECONFIG_REC_COUNT} , PEL_COUNT: {PEL_COUNT} ",
+        "GUARD_COUNT", guardCount, "MAN_GUARD_COUNT", manualGuardCount,
+        "DECONFIG_REC_COUNT", deconfigCount, "PEL_COUNT", unresolvedPelsCount);
 
-    if ((guardCount > 0) || (manualGuardCount > 0) ||
-        (unresolvedPelsCount > 0) || (deconfigCount > 0))
+    // create pels only for system guard and serviceable events and not for
+    // manual guard or FCO
+    if ((guardCount > 0) || (unresolvedPelsCount > 0))
     {
         std::unordered_map<std::string, std::string> data = {
-            {"GUARD_WITH_ASSOC_ERROR_COUNT", std::to_string(guardCount)},
-            {"GUARD_WITH_NO_ASSOC_ERROR_COUNT",
-             std::to_string(manualGuardCount)},
-            {"UNRESOLVED_PEL_WITH_DECONFIG_BIT_COUNT",
-             std::to_string(unresolvedPelsCount)},
-            {"DECONFIG_RECORD_COUNT", std::to_string(deconfigCount)}};
+            {"GUARD_RECORD_COUNT", std::to_string(guardCount)},
+            {"PEL_WITH_DECONFIG_BIT_COUNT",
+             std::to_string(unresolvedPelsCount)}};
 
         auto method = bus.new_method_call(
             "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
@@ -62,11 +66,6 @@ void createNagPel(sdbusplus::bus::bus& bus,
         {
             lg2::error("Error in calling D-Bus method to create PEL");
         }
-        lg2::info("faultlog {GUARD_COUNT}, {MAN_GUARD_COUNT}, "
-                  "{DECONFIG_COUNT} , {PEL_COUNT} ",
-                  "GUARD_COUNT", guardCount, "MAN_GUARD_COUNT",
-                  manualGuardCount, "DECONFIG_COUNT", deconfigCount,
-                  "PEL_COUNT", unresolvedPelsCount);
     }
     else
     {
