@@ -2,6 +2,7 @@
 
 #include <deconfig_reason.hpp>
 #include <deconfig_records.hpp>
+#include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
 
 extern "C"
@@ -68,19 +69,72 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
     return 0;
 }
 
-int DeconfigRecords::getCount()
+int DeconfigRecords::getCount(const GuardRecords& guardRecords)
 {
+    std::vector<std::string> pathList;
+    for (const auto& elem : guardRecords)
+    {
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            continue;
+        }
+        pathList.push_back(*physicalPath);
+    }
+
     DeconfigDataList deconfigList;
     pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
-    return static_cast<int>(deconfigList.targetList.size());
+    DeconfigDataList onlyDeconfigList;
+    for (const auto& target : deconfigList.targetList)
+    {
+        ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
+        if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
+        {
+            // consider only those targets that are not part of guard list
+            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
+                pathList.end())
+            {
+                onlyDeconfigList.addPdbgTarget(target);
+            }
+        }
+    }
+    return static_cast<int>(onlyDeconfigList.targetList.size());
 }
 
-void DeconfigRecords::populate(nlohmann::json& jsonNag)
+void DeconfigRecords::populate(const GuardRecords& guardRecords,
+                               nlohmann::json& jsonNag)
 {
+    // get physical path list of guarded targets
+    std::vector<std::string> pathList;
+    for (const auto& elem : guardRecords)
+    {
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            continue;
+        }
+        pathList.push_back(*physicalPath);
+    }
+
     DeconfigDataList deconfigList;
     pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
 
+    // consider only those targets that are not part of guard list
+    DeconfigDataList onlyDeconfigList;
     for (const auto& target : deconfigList.targetList)
+    {
+        ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
+        if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
+        {
+            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
+                pathList.end())
+            {
+                onlyDeconfigList.addPdbgTarget(target);
+            }
+        }
+    }
+
+    for (const auto& target : onlyDeconfigList.targetList)
     {
         try
         {

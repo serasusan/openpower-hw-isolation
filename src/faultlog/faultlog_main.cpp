@@ -36,10 +36,15 @@ using PropVariant = sdbusplus::utility::dedup_variant_t<Binary>;
 void createNagPel(sdbusplus::bus::bus& bus,
                   const GuardRecords& unresolvedRecords, bool hostPowerOn)
 {
+    //
+    // serviceable records count
     int guardCount = GuardWithEidRecords::getCount(unresolvedRecords);
-    int manualGuardCount = GuardWithoutEidRecords::getCount(unresolvedRecords);
     int unresolvedPelsCount = UnresolvedPELs::getCount(bus, hostPowerOn);
-    int deconfigCount = DeconfigRecords::getCount();
+
+    //
+    // deconfigured records count
+    int manualGuardCount = GuardWithoutEidRecords::getCount(unresolvedRecords);
+    int deconfigCount = DeconfigRecords::getCount(unresolvedRecords);
     lg2::info(
         "faultlog GUARD_COUNT: {GUARD_COUNT}, MAN_GUARD_COUNT: "
         "{MAN_GUARD_COUNT}, "
@@ -249,7 +254,7 @@ int main(int argc, char** argv)
         // pdbg targets with deconfig bit set
         else if (deconfig)
         {
-            (void)DeconfigRecords::populate(faultLogJson);
+            (void)DeconfigRecords::populate(unresolvedRecords, faultLogJson);
         }
 
         // create fault log pel if there are service actions pending
@@ -305,13 +310,17 @@ int main(int argc, char** argv)
         else if (listFaultlog)
         {
             (void)FaultLogPolicy::populate(bus, faultLogJson);
+            // serviceable event records
             (void)GuardWithEidRecords::populate(bus, unresolvedRecords,
                                                 faultLogJson);
-            (void)GuardWithoutEidRecords::populate(unresolvedRecords,
-                                                   faultLogJson);
             (void)UnresolvedPELs::populate(bus, unresolvedRecords, hostPowerOn,
                                            faultLogJson);
-            (void)DeconfigRecords::populate(faultLogJson);
+
+            //
+            // deconfigured records count
+            (void)GuardWithoutEidRecords::populate(unresolvedRecords,
+                                                   faultLogJson);
+            (void)DeconfigRecords::populate(unresolvedRecords, faultLogJson);
         }
         else
         {
