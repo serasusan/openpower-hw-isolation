@@ -2,6 +2,7 @@
 
 #include <deconfig_reason.hpp>
 #include <deconfig_records.hpp>
+#include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
 
 extern "C"
@@ -60,10 +61,6 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
                 }
                 default:
                 {
-                    lg2::info(
-                        "Ignoring deconfig target {TARGET} {DECONFIG_EID} ",
-                        "TARGET", pdbg_target_name(target), "DECONFIG_EID",
-                        static_cast<int>(hwasState.deconfiguredByEid));
                     break;
                 }
             }
@@ -72,24 +69,80 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
     return 0;
 }
 
-int DeconfigRecords::getCount()
+int DeconfigRecords::getCount(const GuardRecords& guardRecords)
 {
+    std::vector<std::string> pathList;
+    for (const auto& elem : guardRecords)
+    {
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            continue;
+        }
+        pathList.push_back(*physicalPath);
+    }
+
     DeconfigDataList deconfigList;
     pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
-    return static_cast<int>(deconfigList.targetList.size());
+    DeconfigDataList onlyDeconfigList;
+    for (const auto& target : deconfigList.targetList)
+    {
+        ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
+        if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
+        {
+            // consider only those targets that are not part of guard list
+            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
+                pathList.end())
+            {
+                onlyDeconfigList.addPdbgTarget(target);
+            }
+        }
+    }
+    return static_cast<int>(onlyDeconfigList.targetList.size());
 }
 
-void DeconfigRecords::populate(nlohmann::json& jsonNag)
+void DeconfigRecords::populate(const GuardRecords& guardRecords,
+                               nlohmann::json& jsonNag)
 {
+    // get physical path list of guarded targets
+    std::vector<std::string> pathList;
+    for (const auto& elem : guardRecords)
+    {
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            continue;
+        }
+        pathList.push_back(*physicalPath);
+    }
+
     DeconfigDataList deconfigList;
     pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
 
-    for (auto target : deconfigList.targetList)
+    // consider only those targets that are not part of guard list
+    DeconfigDataList onlyDeconfigList;
+    for (const auto& target : deconfigList.targetList)
+    {
+        ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
+        if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
+        {
+            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
+                pathList.end())
+            {
+                onlyDeconfigList.addPdbgTarget(target);
+            }
+        }
+    }
+
+    for (const auto& target : onlyDeconfigList.targetList)
     {
         try
         {
             json deconfigJson = json::object();
-            deconfigJson["TYPE"] = pdbg_target_name(target);
+            if (pdbg_target_name(target) != nullptr)
+            {
+                deconfigJson["TYPE"] = pdbg_target_name(target);
+            }
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, target, hwasState))
@@ -98,6 +151,12 @@ void DeconfigRecords::populate(nlohmann::json& jsonNag)
                 {
                     state = stateConfigured;
                 }
+                std::stringstream ss;
+                ss << "0x" << std::hex << hwasState.deconfiguredByEid;
+                deconfigJson["PLID"] = ss.str();
+                deconfigJson["REASON_DESCRIPTION"] =
+                    getDeconfigReason(static_cast<DeconfiguredByReason>(
+                        hwasState.deconfiguredByEid));
             }
             deconfigJson["CURRENT_STATE"] = std::move(state);
 
@@ -106,18 +165,18 @@ void DeconfigRecords::populate(nlohmann::json& jsonNag)
             {
                 deconfigJson["PHYS_PATH"] = attrPhyDevPath;
             }
+            else
+            {
+                // if physical path is not found do not add the record
+                // as it will be of no use
+                continue;
+            }
 
             ATTR_LOCATION_CODE_Type attrLocCode;
             if (!DT_GET_PROP(ATTR_LOCATION_CODE, target, attrLocCode))
             {
                 deconfigJson["LOCATION_CODE"] = attrLocCode;
             }
-
-            std::stringstream ss;
-            ss << "0x" << std::hex << hwasState.deconfiguredByEid;
-            deconfigJson["PLID"] = ss.str();
-            deconfigJson["REASON_DESCRIPTION"] = getDeconfigReason(
-                static_cast<DeconfiguredByReason>(hwasState.deconfiguredByEid));
 
             json header = json::object();
             header["DECONFIGURED"] = std::move(deconfigJson);

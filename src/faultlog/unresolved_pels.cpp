@@ -4,7 +4,6 @@
 #include <phosphor-logging/log.hpp>
 #include <unresolved_pels.hpp>
 #include <util.hpp>
-#include <xyz/openbmc_project/Common/error.hpp>
 
 extern "C"
 {
@@ -275,18 +274,18 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool hostPowerOn)
             count += 1;
         } // endfor
     }
-    catch (
-        const sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument&
-            ex)
+    catch (const sdbusplus::exception::SdBusError& ex)
     {
-        lg2::info("PEL might be deleted but entry is around {ERROR}", "ERROR",
-                  ex.what());
+        lg2::info("There are no PELS or PEL corresponding to guard record is "
+                  "deleted "
+                  " {ERROR}",
+                  "ERROR", ex);
     }
     catch (const std::exception& ex)
     {
         lg2::error("Failed to get count of unresolved pels with deconfig bit "
                    "set {ERROR}",
-                   "ERROR", ex.what());
+                   "ERROR", ex);
     }
     return count;
 }
@@ -452,10 +451,9 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             // add cec errorlog
             json jsonErrorLog = json::object();
             std::stringstream ss;
-            ss << std::hex << plid;
+            ss << std::hex << "0x" << plid;
             jsonErrorLog["ERR_PLID"] = ss.str();
             jsonErrorLog["Callout Section"] = parseCallout(callouts);
-            refCode.insert(0, "0x");
             jsonErrorLog["SRC"] = refCode;
             jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
 
@@ -521,18 +519,18 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             jsonNag.push_back(std::move(jsonServiceEvent));
         }
     }
-    catch (
-        const sdbusplus::xyz::openbmc_project::Common::Error::InvalidArgument&
-            ex)
+    catch (const sdbusplus::exception::SdBusError& ex)
     {
-        lg2::info("PEL might be deleted but entry is around {ERROR}", "ERROR",
-                  ex.what());
+        lg2::info("There are no PELS or PEL corresponding to guard record is "
+                  "deleted "
+                  " {ERROR}",
+                  "ERROR", ex);
     }
     catch (const std::exception& ex)
     {
         lg2::error("Failed to add unresolved pels with deconfig bit "
                    "set {ERROR}",
-                   "ERROR", ex.what());
+                   "ERROR", ex);
     }
 }
 } // namespace openpower::faultlog

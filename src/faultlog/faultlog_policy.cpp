@@ -1,5 +1,5 @@
-#include <phosphor-logging/lg2.hpp>
 #include <faultlog_policy.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <util.hpp>
 
 namespace openpower::faultlog
@@ -44,8 +44,8 @@ void FaultLogPolicy::populate(sdbusplus::bus::bus& bus, nlohmann::json& nagJson)
         }
         catch (const std::exception& ex)
         {
-            lg2::error("Failed to read allow_hw_isolation property {ERROR}",
-                       "ERROR", ex.what());
+            lg2::info("Failed to read allow_hw_isolation property {ERROR}",
+                      "ERROR", ex);
         }
         jsonPolicyVal["MASTER"] = enabled;
 
@@ -60,7 +60,7 @@ void FaultLogPolicy::populate(sdbusplus::bus::bus& bus, nlohmann::json& nagJson)
     catch (const std::exception& ex)
     {
         lg2::error("Failed to add isolation policy details to JSON {ERROR}",
-                   "ERROR", ex.what());
+                   "ERROR", ex);
     }
 
     return;
