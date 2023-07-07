@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "xyz/openbmc_project/Logging/Entry/server.hpp"
 
 #include <CLI/CLI.hpp>
@@ -15,6 +17,10 @@
 
 #include <iostream>
 #include <vector>
+extern "C"
+{
+#include <libpdbg.h>
+}
 
 using namespace openpower::faultlog;
 using ::nlohmann::json;
@@ -26,6 +32,36 @@ using Severity = sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level;
 
 using Binary = std::vector<uint8_t>;
 using PropVariant = sdbusplus::utility::dedup_variant_t<Binary>;
+
+/**
+ * @brief To init phal library for use power system specific device tree
+ *
+ * @return void
+ */
+void initPHAL()
+{
+    // Set PDBG_DTB environment variable to use interested phal cec device tree
+    if (setenv("PDBG_DTB", PHAL_DEVTREE, 1))
+    {
+        lg2::error(
+            "Failed to set PDBG_DTB with errno [{ERRNO}] and errmsg [{ERRMSG}]",
+            "ERRNO", errno, "ERRMSG", strerror(errno));
+        throw std::runtime_error(
+            "Failed to set PDBG_DTB while trying to init PHAL");
+    }
+    // Set log level to info
+    pdbg_set_loglevel(PDBG_ERROR);
+
+    /**
+     * Passing fdt argument as NULL so, pdbg will use PDBG_DTB environment
+     * variable to get interested phal cec device tree instead of default pdbg
+     * device tree.
+     */
+    if (!pdbg_targets_init(NULL))
+    {
+        throw std::runtime_error("pdbg target initialization failed");
+    }
+}
 
 /** @brief Helper method to create faultlog pel
  *
@@ -140,6 +176,9 @@ int main(int argc, char** argv)
         CLI::App app{"Faultlog tool"};
         app.set_help_flag("-h, --help", "Faultlog tool options");
 
+        initPHAL();
+        openpower::guard::libguard_init(false);
+
         auto bus = sdbusplus::bus::new_default();
 
         nlohmann::json faultLogJson = json::array();
@@ -169,7 +208,6 @@ int main(int argc, char** argv)
         systemHdr["SYSTEM"] = std::move(system);
         faultLogJson.push_back(systemHdr);
 
-        openpower::guard::libguard_init();
         // Don't get ephemeral records because those type records are
         // not intended to expose to the end user, just created for
         // internal purpose to use by the BMC and Hostboot.

@@ -57,6 +57,7 @@ faultlog_dependencies = [
 executable('faultlog',
            faultlog_sources,
            dependencies: faultlog_dependencies,
+           include_directories: include_directories('../../'),
            install : true
           )
 

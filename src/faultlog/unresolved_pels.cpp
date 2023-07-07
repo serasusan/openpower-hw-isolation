@@ -27,6 +27,7 @@ using Objects = std::map<sdbusplus::message::object_path, Interfaces>;
 constexpr auto stateConfigured = "CONFIGURED";
 constexpr auto stateDeconfigured = "DECONFIGURED";
 constexpr std::string pwrThermalErrPrefix = "1100";
+constexpr auto chassisPwnOnStartedErrSrc = "BD8D3416";
 
 struct GuardedTarget
 {
@@ -90,8 +91,8 @@ static int getGuardedTarget(struct pdbg_target* target, void* priv)
 static uint64_t getChassisPoweronErrTimestamp(const Objects& objects)
 {
     // xyz.openbmc_project.State.Info.ChassisPowerOnStarted pel
-    const std::string chassisPwnOnStartedErrSrc = "BD8D3416";
     uint64_t timestamp = 0;
+    uint64_t max_timestamp = 0;
     std::string refCode;
     for (const auto& [path, interfaces] : objects)
     {
@@ -134,10 +135,16 @@ static uint64_t getChassisPoweronErrTimestamp(const Objects& objects)
         // of that pel or error object
         if (refCode == chassisPwnOnStartedErrSrc)
         {
-            return timestamp;
+            if (max_timestamp < timestamp)
+            {
+                max_timestamp = timestamp;
+            }
         }
     }
-    return 0;
+
+    lg2::info("Latest chassis poweron time stamp is :{TIME}", "TIME",
+              epochTimeToBCD(max_timestamp));
+    return max_timestamp;
 }
 
 int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool hostPowerOn)
