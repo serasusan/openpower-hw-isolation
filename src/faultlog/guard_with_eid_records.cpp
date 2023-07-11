@@ -4,7 +4,6 @@
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <util.hpp>
-
 extern "C"
 {
 #include <libpdbg.h>
@@ -112,23 +111,18 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             json jsonErrorLogSection = json::array();
             if (dbusErrorObjFound)
             {
-                uint32_t plid = 0;
-                uint64_t timestamp = 0;
                 std::string callouts;
                 std::string refCode;
-
                 std::string objPath = "/xyz/openbmc_project/logging/entry/" +
                                       std::to_string(bmcLogId);
-
-                Properties properties;
-                auto method = bus.new_method_call(
+                Properties loggingEntryProp;
+                auto loggingEntryMethod = bus.new_method_call(
                     "xyz.openbmc_project.Logging", objPath.c_str(),
                     "org.freedesktop.DBus.Properties", "GetAll");
-                method.append("xyz.openbmc_project.Logging.Entry");
-                method.append("org.open_power.Logging.PEL.Entry");
-                auto reply = bus.call(method);
-                reply.read(properties);
-                for (const auto& [prop, propValue] : properties)
+                loggingEntryMethod.append("xyz.openbmc_project.Logging.Entry");
+                auto loggingEntryReply = bus.call(loggingEntryMethod);
+                loggingEntryReply.read(loggingEntryProp);
+                for (const auto& [prop, propValue] : loggingEntryProp)
                 {
                     if (prop == "Resolution")
                     {
@@ -147,7 +141,19 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                             iss >> refCode;
                         }
                     }
-                    else if (prop == "PlatformLogID")
+                } // endfor
+                uint32_t plid = 0;
+                uint64_t timestamp = 0;
+                Properties pelEntryProp;
+                auto pelEntryMethod = bus.new_method_call(
+                    "xyz.openbmc_project.Logging", objPath.c_str(),
+                    "org.freedesktop.DBus.Properties", "GetAll");
+                pelEntryMethod.append("org.open_power.Logging.PEL.Entry");
+                auto pelEntryReply = bus.call(pelEntryMethod);
+                pelEntryReply.read(pelEntryProp);
+                for (const auto& [prop, propValue] : pelEntryProp)
+                {
+                    if (prop == "PlatformLogID")
                     {
                         auto plidPtr = std::get_if<uint32_t>(&propValue);
                         if (plidPtr != nullptr)
@@ -163,7 +169,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                             timestamp = *timestampPtr;
                         }
                     }
-                } // endfor
+                }
                 std::stringstream ss;
                 ss << std::hex << "0x" << plid;
                 jsonErrorLog["ERR_PLID"] = ss.str();
