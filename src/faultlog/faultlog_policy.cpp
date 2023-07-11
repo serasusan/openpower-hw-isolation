@@ -16,7 +16,7 @@ void FaultLogPolicy::populate(sdbusplus::bus::bus& bus, nlohmann::json& nagJson)
             "xyz.openbmc_project.BIOSConfigManager",
             "/xyz/openbmc_project/bios_config/manager",
             "xyz.openbmc_project.BIOSConfig.Manager", "GetAttribute");
-        method.append("hb_field_core_override");
+        method.append("hb_field_core_override_current");
 
         std::tuple<std::string, std::variant<int64_t, std::string>,
                    std::variant<int64_t, std::string>>
