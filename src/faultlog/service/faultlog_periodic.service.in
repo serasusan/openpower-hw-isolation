@@ -1,0 +1,10 @@
+[Unit]
+Description=Faultlog application
+
+[Service]
+ExecStart=@bindir@/faultlog -r
+Type=oneshot
+SyslogIdentifier=faultlog
+
+[Install]
+#WantedBy=multi-user.target
