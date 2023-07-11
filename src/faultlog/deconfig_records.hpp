@@ -2,9 +2,21 @@
 
 #include <libguard/include/guard_record.hpp>
 #include <nlohmann/json.hpp>
-
+extern "C"
+{
+#include <libpdbg.h>
+}
 namespace openpower::faultlog
 {
+struct DeconfigDataList
+{
+    std::vector<pdbg_target*> targetList;
+    void addPdbgTarget(pdbg_target* tgt)
+    {
+        targetList.push_back(tgt);
+    }
+};
+
 using ::openpower::guard::GuardRecords;
 /**
  * @class DeconfigRecords
@@ -41,5 +53,14 @@ class DeconfigRecords
      */
     static void populate(const GuardRecords& guardRecords,
                          nlohmann::json& jsonNag);
+
+  private:
+    /** @brief Get pdbg targets for the guard record
+     *
+     *  @param[in] guardRecords - list of guarded targets to ignore as part of
+     *  @param[inout] DeconfigDataList - pdbg target list
+     * parsing
+     */
+    static DeconfigDataList getDeconfigList(const GuardRecords& guardRecords);
 };
 } // namespace openpower::faultlog
