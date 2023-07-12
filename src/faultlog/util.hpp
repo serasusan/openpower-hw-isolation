@@ -27,7 +27,7 @@ T readProperty(sdbusplus::bus::bus& bus, const std::string& service,
                const std::string& object, const std::string& intf,
                const std::string& prop)
 {
-    T retVal{};
+    std::variant<T> retVal{};
     try
     {
         auto properties =
@@ -45,7 +45,7 @@ T readProperty(sdbusplus::bus::bus& bus, const std::string& service,
             "PROPERTY", prop, "INTF", intf, "PATH", object, "ERROR", ex.what());
         throw;
     }
-    return retVal;
+    return std::get<T>(retVal);
 }
 
 /**
