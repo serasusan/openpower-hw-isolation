@@ -117,9 +117,7 @@ void DeconfigRecords::populate(const GuardRecords& guardRecords,
                 {
                     state = stateConfigured;
                 }
-                std::stringstream ss;
-                ss << "0x" << std::hex << hwasState.deconfiguredByEid;
-                deconfigJson["PLID"] = ss.str();
+                deconfigJson["PLID"] = 0x0;
                 deconfigJson["REASON_DESCRIPTION"] =
                     getDeconfigReason(static_cast<DeconfiguredByReason>(
                         hwasState.deconfiguredByEid));
