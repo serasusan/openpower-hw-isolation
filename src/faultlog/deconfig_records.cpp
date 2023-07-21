@@ -5,10 +5,6 @@
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
 
-extern "C"
-{
-#include <libpdbg.h>
-}
 namespace openpower::faultlog
 {
 
@@ -16,15 +12,6 @@ using ::nlohmann::json;
 
 constexpr auto stateConfigured = "CONFIGURED";
 constexpr auto stateDeconfigured = "DECONFIGURED";
-
-struct DeconfigDataList
-{
-    std::vector<pdbg_target*> targetList;
-    void addPdbgTarget(pdbg_target* tgt)
-    {
-        targetList.push_back(tgt);
-    }
-};
 
 /**
  * @brief Get pdbg targets which has been deconfigured
@@ -69,7 +56,8 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
     return 0;
 }
 
-int DeconfigRecords::getCount(const GuardRecords& guardRecords)
+DeconfigDataList
+    DeconfigRecords::getDeconfigList(const GuardRecords& guardRecords)
 {
     std::vector<std::string> pathList;
     for (const auto& elem : guardRecords)
@@ -90,49 +78,27 @@ int DeconfigRecords::getCount(const GuardRecords& guardRecords)
         ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
         if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
         {
+            std::string phyPathStr(attrPhyDevPath, sizeof(attrPhyDevPath));
             // consider only those targets that are not part of guard list
-            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
+            if (std::find(pathList.begin(), pathList.end(), phyPathStr) ==
                 pathList.end())
             {
                 onlyDeconfigList.addPdbgTarget(target);
             }
         }
     }
-    return static_cast<int>(onlyDeconfigList.targetList.size());
+    return onlyDeconfigList;
+}
+
+int DeconfigRecords::getCount(const GuardRecords& guardRecords)
+{
+    return static_cast<int>(getDeconfigList(guardRecords).targetList.size());
 }
 
 void DeconfigRecords::populate(const GuardRecords& guardRecords,
                                nlohmann::json& jsonNag)
 {
-    // get physical path list of guarded targets
-    std::vector<std::string> pathList;
-    for (const auto& elem : guardRecords)
-    {
-        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
-        if (!physicalPath.has_value())
-        {
-            continue;
-        }
-        pathList.push_back(*physicalPath);
-    }
-
-    DeconfigDataList deconfigList;
-    pdbg_target_traverse(nullptr, getDeconfigTargets, &deconfigList);
-
-    // consider only those targets that are not part of guard list
-    DeconfigDataList onlyDeconfigList;
-    for (const auto& target : deconfigList.targetList)
-    {
-        ATTR_PHYS_DEV_PATH_Type attrPhyDevPath;
-        if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, target, attrPhyDevPath))
-        {
-            if (std::find(pathList.begin(), pathList.end(), attrPhyDevPath) !=
-                pathList.end())
-            {
-                onlyDeconfigList.addPdbgTarget(target);
-            }
-        }
-    }
+    DeconfigDataList onlyDeconfigList = getDeconfigList(guardRecords);
 
     for (const auto& target : onlyDeconfigList.targetList)
     {
@@ -151,9 +117,7 @@ void DeconfigRecords::populate(const GuardRecords& guardRecords,
                 {
                     state = stateConfigured;
                 }
-                std::stringstream ss;
-                ss << "0x" << std::hex << hwasState.deconfiguredByEid;
-                deconfigJson["PLID"] = ss.str();
+                deconfigJson["PLID"] = 0x0;
                 deconfigJson["REASON_DESCRIPTION"] =
                     getDeconfigReason(static_cast<DeconfiguredByReason>(
                         hwasState.deconfiguredByEid));
