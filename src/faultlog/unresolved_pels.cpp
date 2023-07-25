@@ -459,7 +459,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             json jsonErrorLog = json::object();
             std::stringstream ss;
             ss << std::hex << "0x" << plid;
-            jsonErrorLog["ERR_PLID"] = ss.str();
+            jsonErrorLog["PLID"] = ss.str();
             jsonErrorLog["Callout Section"] = parseCallout(callouts);
             jsonErrorLog["SRC"] = refCode;
             jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
