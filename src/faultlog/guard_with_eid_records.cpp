@@ -172,7 +172,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                 }
                 std::stringstream ss;
                 ss << std::hex << "0x" << plid;
-                jsonErrorLog["ERR_PLID"] = ss.str();
+                jsonErrorLog["PLID"] = ss.str();
                 jsonErrorLog["Callout Section"] = parseCallout(callouts);
                 jsonErrorLog["SRC"] = refCode;
                 jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
@@ -231,7 +231,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                     sectionJson["Callout Count"] = 1;
                 }
                 sectionJson["Callouts"] = jsonCallout;
-                jsonErrorLog["ERR_PLID"] =
+                jsonErrorLog["PLID"] =
                     std::to_string(hwasState.deconfiguredByEid);
                 jsonErrorLog["Callout Section"] = sectionJson;
                 jsonErrorLog["SRC"] = 0;
