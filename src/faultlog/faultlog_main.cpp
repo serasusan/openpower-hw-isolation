@@ -176,9 +176,6 @@ int main(int argc, char** argv)
         CLI::App app{"Faultlog tool"};
         app.set_help_flag("-h, --help", "Faultlog tool options");
 
-        initPHAL();
-        openpower::guard::libguard_init(false);
-
         auto bus = sdbusplus::bus::new_default();
 
         nlohmann::json faultLogJson = json::array();
@@ -207,20 +204,6 @@ int main(int argc, char** argv)
         nlohmann::json systemHdr;
         systemHdr["SYSTEM"] = std::move(system);
         faultLogJson.push_back(systemHdr);
-
-        // Don't get ephemeral records because those type records are
-        // not intended to expose to the end user, just created for
-        // internal purpose to use by the BMC and Hostboot.
-        openpower::guard::GuardRecords records = openpower::guard::getAll(true);
-        GuardRecords unresolvedRecords;
-        // filter out all unused or resolved records
-        for (const auto& elem : records)
-        {
-            if (elem.recordId != GUARD_RESOLVED)
-            {
-                unresolvedRecords.emplace_back(elem);
-            }
-        }
 
         bool guardWithEid = false;
         bool guardWithoutEid = false;
@@ -262,8 +245,43 @@ int main(int argc, char** argv)
 
         CLI11_PARSE(app, argc, argv);
 
+        // create bmc reboot pel
+        if (bmcReboot)
+        {
+            // interested only in bmc reboot, host should have been in
+            // IPL runtime during bmc reboot
+            if (!isHostProgressStateRunning(bus)) // host in ipl runtime
+            {
+                lg2::info("Ignore, host is not in running state not "
+                          "bmc reboot");
+                exit(EXIT_SUCCESS);
+            }
+        }
+
+        initPHAL();
+        openpower::guard::libguard_init(false);
+
+        // Don't get ephemeral records because those type records are
+        // not intended to expose to the end user, just created for
+        // internal purpose to use by the BMC and Hostboot.
+        openpower::guard::GuardRecords records = openpower::guard::getAll(true);
+        GuardRecords unresolvedRecords;
+        // filter out all unused or resolved records
+        for (const auto& elem : records)
+        {
+            if (elem.recordId != GUARD_RESOLVED)
+            {
+                unresolvedRecords.emplace_back(elem);
+            }
+        }
+
+        // host will be already on, create nagpel
+        if (bmcReboot)
+        {
+            createNagPel(bus, unresolvedRecords, hostPowerOn);
+        }
         // guard records with associated error object
-        if (guardWithEid)
+        else if (guardWithEid)
         {
             (void)GuardWithEidRecords::populate(bus, unresolvedRecords,
                                                 faultLogJson);
@@ -299,26 +317,6 @@ int main(int argc, char** argv)
         else if (createPel)
         {
             createNagPel(bus, unresolvedRecords, hostPowerOn);
-        }
-        // create bmc reboot pel
-        else if (bmcReboot)
-        {
-            // interested only in bmc reboot, host should have been in
-            // IPL runtime during bmc reboot
-            if (!isHostStateRunning(bus)) // host started
-            {
-                lg2::info("Ignore, host is not started so not bmc reboot");
-            }
-
-            else if (!isHostProgressStateRunning(bus)) // host in ipl runtime
-            {
-                lg2::info("Ignore, host is not in running state not "
-                          "bmc reboot");
-            }
-            else
-            {
-                createNagPel(bus, unresolvedRecords, hostPowerOn);
-            }
         }
         else if (hostPowerOn)
         {
