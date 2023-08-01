@@ -37,18 +37,10 @@ ProgressStages getBootProgress(sdbusplus::bus::bus& bus)
 {
     try
     {
-        using PropertiesVariant =
-            sdbusplus::utility::dedup_variant_t<ProgressStages>;
-
-        auto retVal = readProperty<PropertiesVariant>(
+        return readProperty<ProgressStages>(
             bus, "xyz.openbmc_project.State.Host",
             "/xyz/openbmc_project/state/host0",
             "xyz.openbmc_project.State.Boot.Progress", "BootProgress");
-        const ProgressStages* progPtr = std::get_if<ProgressStages>(&retVal);
-        if (progPtr != nullptr)
-        {
-            return *progPtr;
-        }
     }
     catch (const sdbusplus::exception::SdBusError& ex)
     {
@@ -64,18 +56,10 @@ HostState getHostState(sdbusplus::bus::bus& bus)
 {
     try
     {
-        using PropertiesVariant =
-            sdbusplus::utility::dedup_variant_t<HostState>;
-
-        auto retVal = readProperty<PropertiesVariant>(
-            bus, "xyz.openbmc_project.State.Host",
-            "/xyz/openbmc_project/state/host0",
-            "xyz.openbmc_project.State.Host", "CurrentHostState");
-        const HostState* statePtr = std::get_if<HostState>(&retVal);
-        if (statePtr != nullptr)
-        {
-            return *statePtr;
-        }
+        return readProperty<HostState>(bus, "xyz.openbmc_project.State.Host",
+                                       "/xyz/openbmc_project/state/host0",
+                                       "xyz.openbmc_project.State.Host",
+                                       "CurrentHostState");
     }
     catch (const sdbusplus::exception::SdBusError& ex)
     {

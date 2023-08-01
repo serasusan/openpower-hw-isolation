@@ -31,7 +31,6 @@ using ::openpower::guard::GuardRecords;
 using Severity = sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level;
 
 using Binary = std::vector<uint8_t>;
-using PropVariant = sdbusplus::utility::dedup_variant_t<Binary>;
 
 /**
  * @brief To init phal library for use power system specific device tree
@@ -183,16 +182,13 @@ int main(int argc, char** argv)
         std::string propVal{};
         try
         {
-            auto retVal = readProperty<PropVariant>(
+            auto pVal = readProperty<Binary>(
                 bus, "xyz.openbmc_project.Inventory.Manager",
                 "/xyz/openbmc_project/inventory/system/chassis/"
                 "motherboard",
                 "com.ibm.ipzvpd.VSYS", "TM");
-            if (auto pVal = std::get_if<Binary>(&retVal))
-            {
-                propVal.assign(reinterpret_cast<const char*>(pVal->data()),
-                               pVal->size());
-            }
+            propVal.assign(reinterpret_cast<const char*>(pVal.data()),
+                           pVal.size());
         }
         catch (const std::exception& ex)
         {
