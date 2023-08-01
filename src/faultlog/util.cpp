@@ -1,3 +1,5 @@
+#include <attributes_info.H>
+
 #include <libguard/guard_interface.hpp>
 #include <sdbusplus/exception.hpp>
 #include <util.hpp>
@@ -182,4 +184,53 @@ json parseCallout(const std::string callout)
     return sectionJson;
 }
 
+bool isECOModeEnabled(struct pdbg_target* coreTgt)
+{
+    ATTR_ECO_MODE_Type ecoMode;
+    if (DT_GET_PROP(ATTR_ECO_MODE, coreTgt, ecoMode) ||
+        (ecoMode != ENUM_ATTR_ECO_MODE_ENABLED))
+    {
+        return false;
+    }
+    return true;
+}
+
+bool isECOcore(struct pdbg_target* target)
+{
+    const char* tgtClass = pdbg_target_class_name(target);
+    if (!tgtClass)
+    {
+        lg2::error("Failed to get class name for the target");
+        return false;
+    }
+    std::string strTarget(tgtClass);
+    if (strTarget != "core" && strTarget != "fc")
+    {
+        return false;
+    }
+    if (strTarget == "core")
+    {
+        return isECOModeEnabled(target);
+    }
+    struct pdbg_target* coreTgt;
+    pdbg_for_each_target("core", target, coreTgt)
+    {
+        if (isECOModeEnabled(coreTgt))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string pdbgTargetName(struct pdbg_target* target)
+{
+
+    if (isECOcore(target))
+    {
+        return "Cache-Only Core";
+    }
+    auto trgtName = pdbg_target_name(target);
+    return (trgtName ? trgtName : "");
+}
 } // namespace openpower::faultlog

@@ -4,6 +4,7 @@
 #include <deconfig_records.hpp>
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
+#include <util.hpp>
 
 namespace openpower::faultlog
 {
@@ -105,10 +106,7 @@ void DeconfigRecords::populate(const GuardRecords& guardRecords,
         try
         {
             json deconfigJson = json::object();
-            if (pdbg_target_name(target) != nullptr)
-            {
-                deconfigJson["TYPE"] = pdbg_target_name(target);
-            }
+            deconfigJson["TYPE"] = pdbgTargetName(target);
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, target, hwasState))
@@ -149,7 +147,7 @@ void DeconfigRecords::populate(const GuardRecords& guardRecords,
         catch (const std::exception& ex)
         {
             lg2::error("Failed to add deconfig records {TARGET} {ERROR}",
-                       "TARGET", pdbg_target_name(target), "ERROR", ex.what());
+                       "TARGET", pdbgTargetName(target), "ERROR", ex.what());
         }
     }
 }
