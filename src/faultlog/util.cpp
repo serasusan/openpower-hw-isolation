@@ -233,4 +233,5 @@ std::string pdbgTargetName(struct pdbg_target* target)
     auto trgtName = pdbg_target_name(target);
     return (trgtName ? trgtName : "");
 }
+
 } // namespace openpower::faultlog

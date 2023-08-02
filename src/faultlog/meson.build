@@ -12,7 +12,7 @@ phosphor_dbus_interfaces_dep = dependency(
         'phosphor_dbus_interfaces_dep'
     ],  
 )
-
+sdeventplus = dependency('sdeventplus')
 phosphor_logging_dep = dependency(
     'phosphor-logging',
     fallback: ['phosphor-logging', 'phosphor_logging_dep'],
@@ -51,7 +51,8 @@ faultlog_dependencies = [
         nlohmann_json,
         libpdbg,
         libdtapi,
-        libguard
+        libguard,
+        sdeventplus
     ]
 
 executable('faultlog',

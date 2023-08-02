@@ -12,6 +12,9 @@
 #include <nlohmann/json.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
+#include <sdeventplus/clock.hpp>
+#include <sdeventplus/source/event.hpp>
+#include <sdeventplus/utility/timer.hpp>
 #include <unresolved_pels.hpp>
 #include <util.hpp>
 
@@ -25,6 +28,7 @@ extern "C"
 using namespace openpower::faultlog;
 using ::nlohmann::json;
 using ::openpower::guard::GuardRecords;
+using Timer = sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>;
 
 #define GUARD_RESOLVED 0xFFFFFFFF
 
@@ -32,6 +36,7 @@ using Severity = sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level;
 
 using Binary = std::vector<uint8_t>;
 
+constexpr std::chrono::milliseconds hostStateCheckTimeout(5000); //5sec
 /**
  * @brief To init phal library for use power system specific device tree
  *
@@ -176,7 +181,7 @@ int main(int argc, char** argv)
         app.set_help_flag("-h, --help", "Faultlog tool options");
 
         auto bus = sdbusplus::bus::new_default();
-
+        auto event = sdeventplus::Event::get_default();
         nlohmann::json faultLogJson = json::array();
 
         std::string propVal{};
@@ -318,11 +323,13 @@ int main(int argc, char** argv)
         {
             if (isHostProgressStateRunning(bus))
             {
+                lg2::info("faultlog hostpoweron host is already in running "
+                          "state, create fautlog pel ");
                 createNagPel(bus, unresolvedRecords, hostPowerOn);
             }
             else
             {
-                lg2::info("faultlog - hostpoweron creating watch "
+                lg2::info("faultlog host is not in running state create watch "
                           "for progress state");
                 std::unique_ptr<sdbusplus::bus::match_t> _hostStatePropWatch =
                     std::make_unique<sdbusplus::bus::match_t>(
@@ -335,7 +342,27 @@ int main(int argc, char** argv)
                             propertyChanged(bus, unresolvedRecords, hostPowerOn,
                                             msg);
                         });
-                bus.process_loop();
+
+                // during bmc reboot when host is already at runtime state
+                // manager does not notify PropertyChanged signal for
+                // BootProgress. It simply reads the BootProgress from serialize
+                // file and updates D-Bus property. Using timer to query the
+                // progress to cater fore bmc reboot case.
+                auto timerCb = [&bus, &unresolvedRecords,
+                                hostPowerOn](Timer& timer) {
+                    if (isHostProgressStateRunning(bus))
+                    {
+                        lg2::info("faultlog poweron timer host reached running "
+                                  "state. create fautlog pel ");
+                        createNagPel(bus, unresolvedRecords, hostPowerOn);
+                        timer.setEnabled(false);
+                        exit(EXIT_SUCCESS);
+                    }
+                };
+                Timer timer(event, std::move(timerCb), hostStateCheckTimeout);
+                timer.setEnabled(true);
+                bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
+                return event.loop();
             }
         }
         // write faultlog json to stdout
