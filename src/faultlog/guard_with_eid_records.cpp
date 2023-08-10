@@ -225,8 +225,8 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                                  attrLocCode))
                 {
                     jsonCallout["Location Code"] = attrLocCode;
-                    sectionJson["Callout Count"] = 1;
                 }
+                sectionJson["Callout Count"] = 1;
                 sectionJson["Callouts"] = jsonCallout;
                 jsonErrorLog["PLID"] =
                     std::to_string(hwasState.deconfiguredByEid);
