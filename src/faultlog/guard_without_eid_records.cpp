@@ -137,8 +137,6 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
                 {
                     state = stateConfigured;
                 }
-                // Manually deconfigured records will not have a PLID
-                deconfigJson["PLID"] = 0x0;
             }
             deconfigJson["CURRENT_STATE"] = std::move(state);
 
@@ -163,7 +161,7 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
             }
 
             json header = json::object();
-            header["DECONFIGURED"] = std::move(deconfigJson);
+            header["MANUAL_ISOLATION"] = std::move(deconfigJson);
             jsonNag.push_back(std::move(header));
         }
     }
