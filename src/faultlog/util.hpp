@@ -8,6 +8,10 @@
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
 #include <ctime>
+extern "C"
+{
+#include <libpdbg.h>
+}
 
 namespace openpower::faultlog
 {
@@ -92,4 +96,21 @@ std::string epochTimeToBCD(uint64_t milliSeconds);
  */
 json parseCallout(const std::string callout);
 
+/**
+ * @brief Return true if the target is of type ECO core
+ *
+ * @param[in] target - pdbg target
+ *
+ * @return true if target is of type eco core else false
+ */
+bool isECOcore(struct pdbg_target* target);
+
+/**
+ * @brief Return name of the target
+ *
+ * @param[in] target - pdbg target
+ *
+ * @return name of the target
+ */
+std::string pdbgTargetName(struct pdbg_target* target);
 } // namespace openpower::faultlog

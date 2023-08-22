@@ -198,10 +198,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                 continue;
             }
             json jsonResource = json::object();
-            if (pdbg_target_name(guardedTarget.target) != nullptr)
-            {
-                jsonResource["TYPE"] = pdbg_target_name(guardedTarget.target);
-            }
+            jsonResource["TYPE"] = pdbgTargetName(guardedTarget.target);
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target, hwasState))
@@ -228,8 +225,8 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                                  attrLocCode))
                 {
                     jsonCallout["Location Code"] = attrLocCode;
-                    sectionJson["Callout Count"] = 1;
                 }
+                sectionJson["Callout Count"] = 1;
                 sectionJson["Callouts"] = jsonCallout;
                 jsonErrorLog["PLID"] =
                     std::to_string(hwasState.deconfiguredByEid);

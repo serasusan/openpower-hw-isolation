@@ -486,8 +486,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
                                   "RECORD_ID", elem.recordId);
                         continue;
                     }
-                    jsonResource["TYPE"] =
-                        pdbg_target_name(guardedTarget.target);
+                    jsonResource["TYPE"] = pdbgTargetName(guardedTarget.target);
                     std::string state = stateDeconfigured;
                     ATTR_HWAS_STATE_Type hwasState;
                     if (!DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target,

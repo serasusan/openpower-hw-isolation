@@ -128,10 +128,7 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
         for (const auto& target : guardList.targetList)
         {
             json deconfigJson = json::object();
-            if (pdbg_target_name(target) != nullptr)
-            {
-                deconfigJson["TYPE"] = std::string(pdbg_target_name(target));
-            }
+            deconfigJson["TYPE"] = pdbgTargetName(target);
             std::string state = stateDeconfigured;
             ATTR_HWAS_STATE_Type hwasState;
             if (!DT_GET_PROP(ATTR_HWAS_STATE, target, hwasState))
