@@ -72,8 +72,10 @@ std::pair<event::EventMsg, event::EventSeverity>
 
         default:
             log<level::ERR>(
-                fmt::format("Unsupported deconfigured reason is given [{}]",
-                            reason)
+                fmt::format(
+                    "Unsupported deconfigured reason is given [{}]",
+                    static_cast<std::underlying_type_t<DeconfiguredByReason>>(
+                        reason))
                     .c_str());
             error_log::createErrorLog(error_log::HwIsolationGenericErrMsg,
                                       error_log::Level::Informational,
