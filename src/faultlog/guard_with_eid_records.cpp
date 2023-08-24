@@ -244,7 +244,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             jsonErrlogObj["CEC_ERROR_LOG"] = std::move(jsonErrorLogSection);
 
             json jsonServiceEvent = json::object();
-            jsonServiceEvent["SERVICABLE_EVENT"] = std::move(jsonErrlogObj);
+            jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(jsonErrlogObj);
             jsonNag.push_back(std::move(jsonServiceEvent));
         }
         catch (const std::exception& ex)
