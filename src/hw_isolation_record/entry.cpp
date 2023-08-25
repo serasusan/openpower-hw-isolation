@@ -191,9 +191,12 @@ std::optional<EntrySeverity>
 
         default:
             log<level::ERR>(
-                fmt::format("Unsupported GardType [{}] was given ",
-                            "to get the hardware isolation entry severity type",
-                            gardType)
+                fmt::format(
+                    "Unsupported GardType [{}] was given ",
+                    "to get the hardware isolation entry severity type",
+                    static_cast<
+                        std::underlying_type_t<openpower::guard::GardType>>(
+                        gardType))
                     .c_str());
             return std::nullopt;
     }
