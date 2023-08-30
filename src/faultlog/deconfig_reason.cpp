@@ -58,9 +58,9 @@ std::string getDeconfigReason(const DeconfiguredByReason& reason)
         case DECONFIGURED_BY_NO_PEER_TARGET:
             return "ASSOCIATION";
         default:
-            return "Unkown";
+            return "ERROR LOG";
     }
-    return "Unknown";
+    return "ERROR LOG";
 }
 
 } // namespace openpower::faultlog

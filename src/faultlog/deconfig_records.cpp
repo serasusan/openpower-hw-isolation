@@ -32,8 +32,7 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
     ATTR_HWAS_STATE_Type hwasState;
     if (!DT_GET_PROP(ATTR_HWAS_STATE, target, hwasState))
     {
-        if ((hwasState.deconfiguredByEid != 0) &&
-            (DECONFIGURED_BY_PLID_MASK & hwasState.deconfiguredByEid) == 0)
+        if ((DECONFIGURED_BY_PLID_MASK & hwasState.deconfiguredByEid) == 0)
         {
             // inlcude only specific states and other might be by association
             switch (hwasState.deconfiguredByEid)
@@ -52,6 +51,10 @@ static int getDeconfigTargets(struct pdbg_target* target, void* priv)
                     break;
                 }
             }
+        }
+        else if (hwasState.deconfiguredByEid != 0)
+        {
+            deconfigList->addPdbgTarget(target);
         }
     }
     return 0;
@@ -116,6 +119,13 @@ void DeconfigRecords::populate(const GuardRecords& guardRecords,
                     state = stateConfigured;
                 }
                 deconfigJson["PLID"] = 0x0;
+                if ((DECONFIGURED_BY_PLID_MASK & hwasState.deconfiguredByEid) !=
+                    0)
+                {
+                    std::stringstream ss;
+                    ss << std::hex << "0x" << hwasState.deconfiguredByEid;
+                    deconfigJson["PLID"] = ss.str();
+                }
                 deconfigJson["REASON_DESCRIPTION"] =
                     getDeconfigReason(static_cast<DeconfiguredByReason>(
                         hwasState.deconfiguredByEid));
