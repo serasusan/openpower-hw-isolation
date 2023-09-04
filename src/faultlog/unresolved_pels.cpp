@@ -2,9 +2,9 @@
 
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/log.hpp>
+#include <poweron_time.hpp>
 #include <unresolved_pels.hpp>
 #include <util.hpp>
-
 extern "C"
 {
 #include <libpdbg.h>
@@ -67,86 +67,6 @@ static int getGuardedTarget(struct pdbg_target* target, void* priv)
     return 0;
 }
 
-/**
- * @brief Return timestamp of the ChassisPowerOnStarted PEL
- *
- * Loop through all the D-Bus error objects to find PEL matching
- * ChassisPowerOnStarted and return the timestamp of it.
- *
- * For faultlog consider only those pels that are logged after chassis
- * has powered-on i.e after xyz.openbmc_project.State.Info.ChassisPowerOnStarted
- * PEL has been created. If poweron PEL is not found consider
- * all errors. This is done to remove duplicate PELS that are
- * logged during IPL for a long running system. Considering only latest
- * errors.
- *
- * For some of the PELS user might not have changed the resolved bit
- * to true after replacing a failed FRU, it too will show up in the
- * faultlog dump so considering only those that are logged after poweron.
- *
- * @param[in] objects - error log D-Bus objects
- *
- * @return timestamp of the pel if found else return 0
- */
-static uint64_t getChassisPoweronErrTimestamp(const Objects& objects)
-{
-    // xyz.openbmc_project.State.Info.ChassisPowerOnStarted pel
-    uint64_t timestamp = 0;
-    uint64_t max_timestamp = 0;
-    std::string refCode;
-    for (const auto& [path, interfaces] : objects)
-    {
-        for (const auto& [intf, properties] : interfaces)
-        {
-            if (intf == "xyz.openbmc_project.Logging.Entry")
-            {
-                for (const auto& [prop, propValue] : properties)
-                {
-                    if (prop == "EventId")
-                    {
-                        auto eventIdPtr = std::get_if<std::string>(&propValue);
-                        if (eventIdPtr != nullptr)
-                        {
-                            // EventId B700900B 00000072 00010016 ...
-                            // First value is RefCode
-                            std::istringstream iss(*eventIdPtr);
-                            iss >> refCode;
-                        }
-                    }
-                }
-            }
-            else if (intf == "org.open_power.Logging.PEL.Entry")
-            {
-                for (const auto& [prop, propValue] : properties)
-                {
-                    if (prop == "Timestamp")
-                    {
-                        auto timestampPtr = std::get_if<uint64_t>(&propValue);
-                        if (timestampPtr != nullptr)
-                        {
-                            timestamp = *timestampPtr;
-                        }
-                    }
-                }
-            }
-        }
-
-        // if chassis poweron src is found return the timestamp
-        // of that pel or error object
-        if (refCode == chassisPwnOnStartedErrSrc)
-        {
-            if (max_timestamp < timestamp)
-            {
-                max_timestamp = timestamp;
-            }
-        }
-    }
-
-    lg2::info("Latest chassis poweron time stamp is :{TIME}", "TIME",
-              epochTimeToBCD(max_timestamp));
-    return max_timestamp;
-}
-
 int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
 {
     int count = 0;
@@ -159,8 +79,8 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
         auto reply = bus.call(method);
         reply.read(objects);
 
-        // read timestamp of poweron PEL
-        uint64_t poweronTimestamp = getChassisPoweronErrTimestamp(objects);
+        // read timestamp from file
+        uint64_t poweronTimestamp = readPowerOnTime(bus);
 
         for (const auto& [path, interfaces] : objects)
         {
@@ -246,15 +166,6 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
                 continue;
             }
 
-            if (ignorePwrFanPel)
-            {
-                // power and thermal err src starts with 1100
-                if (refCode.substr(0, pwrThermalErrPrefix.length()) ==
-                    pwrThermalErrPrefix)
-                {
-                    continue;
-                }
-            }
             // ignore informational and debug errors
             if ((severity == "xyz.openbmc_project.Logging.Entry.Level.Debug") ||
                 (severity ==
@@ -273,6 +184,33 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
             {
                 continue;
             }
+
+            // power and thermal err src starts with 1100
+            bool pwrThermalErr = false;
+            if (refCode.substr(0, pwrThermalErrPrefix.length()) ==
+                pwrThermalErrPrefix)
+            {
+                pwrThermalErr = true;
+            }
+
+            // during IPL ignore power and thermal errors
+            if (ignorePwrFanPel && pwrThermalErr)
+            {
+                lg2::info("Ignoring power/thermal PEL as system is IPLing "
+                          "{OBJECT}",
+                          "OBJECT", path.str);
+                continue;
+            }
+
+            // Ignore power and thermal pels if poweron timestamp is not found
+            if (pwrThermalErr && poweronTimestamp == 0)
+            {
+                lg2::info("Ignoring power/thermal PEL as poweron timestamp "
+                          "is not found {OBJECT}",
+                          "OBJECT", path.str);
+                continue;
+            }
+
             // Ignore PELS that are created before chassis poweron
             if (timestamp < poweronTimestamp)
             {
@@ -309,7 +247,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
         auto reply = bus.call(method);
         reply.read(objects);
 
-        uint64_t poweronTimestamp = getChassisPoweronErrTimestamp(objects);
+        uint64_t poweronTimestamp = readPowerOnTime(bus);
 
         for (const auto& [path, interfaces] : objects)
         {
@@ -433,12 +371,29 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
                 continue; // will be captured as part of guard records
             }
 
+            // power and thermal err src starts with 1100
+            bool pwrThermalErr = false;
+            if (refCode.substr(0, pwrThermalErrPrefix.length()) ==
+                pwrThermalErrPrefix)
+            {
+                pwrThermalErr = true;
+            }
+
+            // Ignore power and thermal pels if poweron timestamp is not found
+            if (pwrThermalErr && poweronTimestamp == 0)
+            {
+                lg2::debug("Ignoring power/thermal PEL as poweron timestamp "
+                           "is not found {OBJECT}",
+                           "OBJECT", path.str);
+                continue;
+            }
+
             // Ignore PELS that are created before chassis poweron
             if (timestamp < poweronTimestamp)
             {
-                lg2::info("Ignoring PEL created before chassis "
-                          "poweron {OBJECT}",
-                          "OBJECT", path.str);
+                lg2::debug("Ignoring PEL created before chassis "
+                           "poweron {OBJECT}",
+                           "OBJECT", path.str);
                 continue;
             }
 

@@ -40,11 +40,11 @@ faultlog_sources = [
         'faultlog_policy.cpp',
         'unresolved_pels.cpp',
         'deconfig_records.cpp',
-        'deconfig_reason.cpp'
+        'deconfig_reason.cpp',
+        'poweron_time.cpp'
         ]
 
 faultlog_dependencies = [ 
-        format,
         phosphor_dbus_interfaces,
         phosphor_logging,
         sdbusplus,
@@ -58,6 +58,23 @@ faultlog_dependencies = [
 executable('faultlog',
            faultlog_sources,
            dependencies: faultlog_dependencies,
+           include_directories: include_directories('../../'),
+           install : true
+          )
+
+faultlog_poweron_time_sources = [ 
+        'faultlog_poweron_time.cpp',
+        'poweron_time.cpp'
+        ]
+
+faultlog_poweron_time_dependencies = [ 
+        phosphor_logging,
+        sdbusplus,
+        ]
+
+executable('faultlog-poweron-time',
+           faultlog_poweron_time_sources,
+           dependencies: faultlog_poweron_time_dependencies,
            include_directories: include_directories('../../'),
            install : true
           )

@@ -1,0 +1,15 @@
+[Unit]
+Description=Write chassis0 poweron time to file
+Wants=obmc-power-start-pre@0.target
+Before=obmc-power-start-pre@0.target
+Before=phosphor-regulators-config.service
+Conflicts=obmc-chassis-poweroff@0.target
+ConditionPathExists=!/run/openbmc/chassis@0-on
+
+[Service]
+Restart=no
+Type=oneshot
+ExecStart=@bindir@/faultlog-poweron-time
+
+[Install]
+WantedBy=obmc-chassis-poweron@0.target

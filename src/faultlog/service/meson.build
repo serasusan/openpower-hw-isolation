@@ -4,10 +4,10 @@ conf_data = configuration_data()
 conf_data.set('bindir', get_option('prefix') / get_option('bindir'))
 
 input_files = ['faultlog_periodic.service.in', 'faultlog_hostpoweron.service.in',
-        'faultlog_periodic.timer']
+        'faultlog_periodic.timer', 'faultlog_create_chassis_poweron_time.service.in']
 
 output_files = ['faultlog_periodic.service', 'faultlog_hostpoweron.service',
-        'faultlog_periodic.timer']
+        'faultlog_periodic.timer', 'faultlog_create_chassis_poweron_time.service']
 
 counter = 0
 foreach i : input_files
@@ -34,6 +34,10 @@ systemd_alias += [[
 
 systemd_alias += [[
     '../faultlog_periodic.timer', 'timers.target.wants/faultlog_periodic.timer'
+]]
+
+systemd_alias += [[
+    '../faultlog_create_chassis_poweron_time.service', 'obmc-chassis-poweron@0.target.wants/faultlog_create_chassis_poweron_time.service'
 ]]
 
 foreach service: systemd_alias

@@ -7,7 +7,6 @@
 #include <xyz/openbmc_project/State/Boot/Progress/server.hpp>
 #include <xyz/openbmc_project/State/Host/server.hpp>
 
-#include <ctime>
 extern "C"
 {
 #include <libpdbg.h>
@@ -78,14 +77,6 @@ bool isHostProgressStateRunning(sdbusplus::bus::bus& bus);
  * @return true if host started
  */
 bool isHostStateRunning(sdbusplus::bus::bus& bus);
-
-/**
- * @brief Return time in BCD from milliSeconds since epoch time
- * @param[in] milliSeconds - milli seconds since epoch time
- *
- * @return string time value in string format
- */
-std::string epochTimeToBCD(uint64_t milliSeconds);
 
 /**
  * @brief Parse the callout values from the logging Resolution property
