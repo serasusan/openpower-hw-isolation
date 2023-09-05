@@ -26,13 +26,17 @@ std::string getGuardReason(const GuardRecords& guardRecords,
                        "RECORD_ID", elem.recordId);
             continue;
         }
-        std::string temp(*physicalPath);
-        if (temp.find(path) != std::string::npos)
+        std::string phyPath(*physicalPath);
+        if (phyPath.find(path) != std::string::npos)
         {
-            return openpower::guard::guardReasonToStr(elem.errType);
+            std::string reason =
+                openpower::guard::guardReasonToStr(elem.errType);
+            std::transform(reason.begin(), reason.end(), reason.begin(),
+                           ::toupper);
+            return reason;
         }
     }
-    return "Unknown";
+    return "UNKNOWN";
 }
 ProgressStages getBootProgress(sdbusplus::bus::bus& bus)
 {
