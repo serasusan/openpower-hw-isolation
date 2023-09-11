@@ -29,6 +29,8 @@ endif
 libpdbg = meson.get_compiler('c').find_library('libpdbg')
 libdtapi = dependency('libdt-api')
 libguard = cpp.find_library('libguard')
+libphal = cpp.find_library('phal')
+
 
 systemd_dep = dependency('systemd')
 
@@ -52,6 +54,7 @@ faultlog_dependencies = [
         libpdbg,
         libdtapi,
         libguard,
+        libphal,
         sdeventplus
     ]
 

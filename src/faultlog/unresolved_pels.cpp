@@ -1,4 +1,5 @@
 #include <attributes_info.H>
+#include <libphal.H>
 
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/log.hpp>
@@ -441,12 +442,12 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
                     }
                     jsonResource["CURRENT_STATE"] = std::move(state);
 
-                    ATTR_LOCATION_CODE_Type attrLocCode;
-                    if (!DT_GET_PROP(ATTR_LOCATION_CODE, guardedTarget.target,
-                                     attrLocCode))
-                    {
-                        jsonResource["LOCATION_CODE"] = attrLocCode;
-                    }
+                    // getLocationCode checks if attr is present in target else
+                    // gets it from partent target
+                    ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
+                    openpower::phal::pdbg::getLocationCode(guardedTarget.target,
+                                                           attrLocCode);
+                    jsonResource["LOCATION_CODE"] = attrLocCode;
 
                     jsonResource["REASON_DESCRIPTION"] =
                         getGuardReason(guardRecords, *physicalPath);
