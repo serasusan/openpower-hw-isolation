@@ -4,7 +4,6 @@
 #include <sdbusplus/exception.hpp>
 #include <util.hpp>
 
-#include <iomanip>
 #include <sstream>
 
 namespace openpower::faultlog
@@ -27,13 +26,17 @@ std::string getGuardReason(const GuardRecords& guardRecords,
                        "RECORD_ID", elem.recordId);
             continue;
         }
-        std::string temp(*physicalPath);
-        if (temp.find(path) != std::string::npos)
+        std::string phyPath(*physicalPath);
+        if (phyPath.find(path) != std::string::npos)
         {
-            return openpower::guard::guardReasonToStr(elem.errType);
+            std::string reason =
+                openpower::guard::guardReasonToStr(elem.errType);
+            std::transform(reason.begin(), reason.end(), reason.begin(),
+                           ::toupper);
+            return reason;
         }
     }
-    return "Unknown";
+    return "UNKNOWN";
 }
 ProgressStages getBootProgress(sdbusplus::bus::bus& bus)
 {
@@ -89,35 +92,6 @@ bool isHostProgressStateRunning(sdbusplus::bus::bus& bus)
 bool isHostStateRunning(sdbusplus::bus::bus& bus)
 {
     return getHostState(bus) == HostState::Running;
-}
-
-std::string epochTimeToBCD(uint64_t milliSeconds)
-{
-    auto decimalToBCD = [](int value) {
-        std::stringstream ss;
-        ss << std::setw(2) << std::setfill('0') << value;
-        return ss.str();
-    };
-    std::chrono::milliseconds ms{milliSeconds};
-    std::chrono::time_point<std::chrono::system_clock> time{ms};
-
-    time_t t = std::chrono::system_clock::to_time_t(time);
-    tm* timeInfo = localtime(&t);
-
-    int year = 1900 + timeInfo->tm_year;
-    std::string bcdYear = decimalToBCD(year / 100);
-    bcdYear += decimalToBCD(year % 100);
-    std::string bcdMonth = decimalToBCD(timeInfo->tm_mon + 1); // Month (1-12)
-    std::string bcdDay = decimalToBCD(timeInfo->tm_mday);  // Day of the month
-    std::string bcdHour = decimalToBCD(timeInfo->tm_hour); // Hour (0-23)
-    std::string bcdMin = decimalToBCD(timeInfo->tm_min);   // Minutes
-    std::string bcdSec = decimalToBCD(timeInfo->tm_sec);   // Seconds
-
-    // Construct the BCD time string
-    //"DATE_TIME": "04/11/2023 09:39:15",
-    std::string bcdTime = bcdMonth + "/" + bcdDay + "/" + bcdYear + " " +
-                          bcdHour + ":" + bcdMin + ":" + bcdSec;
-    return bcdTime;
 }
 
 json parseCallout(const std::string callout)

@@ -3,6 +3,7 @@
 #include <guard_with_eid_records.hpp>
 #include <libguard/guard_interface.hpp>
 #include <phosphor-logging/lg2.hpp>
+#include <poweron_time.hpp>
 #include <util.hpp>
 extern "C"
 {
