@@ -1,4 +1,5 @@
 #include <attributes_info.H>
+#include <libphal.H>
 
 #include <guard_with_eid_records.hpp>
 #include <libguard/guard_interface.hpp>
@@ -9,7 +10,6 @@ extern "C"
 {
 #include <libpdbg.h>
 }
-
 namespace openpower::faultlog
 {
 using ::nlohmann::json;
@@ -221,12 +221,14 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             {
                 json jsonCallout = json::object();
                 json sectionJson = json::object();
-                ATTR_LOCATION_CODE_Type attrLocCode;
-                if (!DT_GET_PROP(ATTR_LOCATION_CODE, guardedTarget.target,
-                                 attrLocCode))
-                {
-                    jsonCallout["Location Code"] = attrLocCode;
-                }
+
+                // getLocationCode checks if attr is present in target else
+                // gets it from partent target
+                ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
+                openpower::phal::pdbg::getLocationCode(guardedTarget.target,
+                                                       attrLocCode);
+                jsonCallout["Location Code"] = attrLocCode;
+
                 sectionJson["Callout Count"] = 1;
                 sectionJson["Callouts"] = jsonCallout;
                 jsonErrorLog["PLID"] =

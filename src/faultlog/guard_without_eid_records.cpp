@@ -1,4 +1,5 @@
 #include <attributes_info.H>
+#include <libphal.H>
 
 #include <guard_without_eid_records.hpp>
 #include <libguard/guard_interface.hpp>
@@ -9,7 +10,6 @@ extern "C"
 {
 #include <libpdbg.h>
 }
-
 namespace openpower::faultlog
 {
 
@@ -154,11 +154,11 @@ void GuardWithoutEidRecords::populate(const GuardRecords& guardRecords,
                 continue;
             }
 
-            ATTR_LOCATION_CODE_Type attrLocCode;
-            if (!DT_GET_PROP(ATTR_LOCATION_CODE, target, attrLocCode))
-            {
-                deconfigJson["LOCATION_CODE"] = attrLocCode;
-            }
+            // getLocationCode checks if attr is present in target else
+            // gets it from partent target
+            ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
+            openpower::phal::pdbg::getLocationCode(target, attrLocCode);
+            deconfigJson["LOCATION_CODE"] = attrLocCode;
 
             json header = json::object();
             header["MANUAL_ISOLATION"] = std::move(deconfigJson);
