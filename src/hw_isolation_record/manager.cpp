@@ -754,14 +754,23 @@ void Manager::processHardwareIsolationRecordFile()
      */
     try
     {
-        _timerObjs.emplace(
-            std::make_unique<
-                sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                _eventLoop,
-                std::bind(std::mem_fn(&hw_isolation::record::Manager::
-                                          handleHostIsolatedHardwares),
-                          this),
-                std::chrono::seconds(5)));
+        // The handleHostIsolatedHardwares method is called after 5 seconds to handle atomicity 
+        // in the guard file operations. Within this time window, if there are multiple updates 
+        // to the guard file, process all of them together. We need not add another timer object 
+        // to process the new information, as the earlier information is not yet processed
+        // and could be done together. In every iteration we process and update all the guard records. 
+        // This will optimize the time consumed when there are multiple guard records created.
+        if(_timerObjs.empty())
+        {
+            _timerObjs.emplace(
+                std::make_unique<
+                    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
+                    _eventLoop,
+                    std::bind(std::mem_fn(&hw_isolation::record::Manager::
+                                              handleHostIsolatedHardwares),
+                              this),
+                    std::chrono::seconds(5)));
+        }
     }
     catch (const std::exception& e)
     {
