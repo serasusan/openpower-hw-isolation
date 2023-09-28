@@ -214,7 +214,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             jsonResource["REASON_DESCRIPTION"] =
                 getGuardReason(guardRecords, *physicalPath);
 
-            jsonResource["GARD_RECORD"] = true;
+            jsonResource["GUARD_RECORD"] = true;
 
             // error object is deleted add what ever data is found
             if (!dbusErrorObjFound)
