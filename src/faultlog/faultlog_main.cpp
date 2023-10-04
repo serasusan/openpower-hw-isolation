@@ -299,8 +299,13 @@ int main(int argc, char** argv)
         // guard records with associated error object
         else if (guardWithEid)
         {
+            // serviceable event records
+            nlohmann::json errorlog = json::array();
             (void)GuardWithEidRecords::populate(bus, unresolvedRecords,
-                                                faultLogJson);
+                                                errorlog);
+            nlohmann::json jsonServiceEvent;
+            jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(errorlog);
+            faultLogJson.emplace_back(jsonServiceEvent);
         }
 
         // guard records without any associated error object
@@ -319,8 +324,12 @@ int main(int argc, char** argv)
         // unresolved pels with deconfig bit set
         else if (unresolvedPels)
         {
-            (void)UnresolvedPELs::populate(bus, unresolvedRecords,
-                                           faultLogJson);
+            // serviceable event records
+            nlohmann::json errorlog = json::array();
+            (void)UnresolvedPELs::populate(bus, unresolvedRecords, errorlog);
+            nlohmann::json jsonServiceEvent;
+            jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(errorlog);
+            faultLogJson.emplace_back(jsonServiceEvent);
         }
 
         // pdbg targets with deconfig bit set
@@ -391,10 +400,13 @@ int main(int argc, char** argv)
         {
             (void)FaultLogPolicy::populate(bus, faultLogJson);
             // serviceable event records
+            nlohmann::json errorlog = json::array();
             (void)GuardWithEidRecords::populate(bus, unresolvedRecords,
-                                                faultLogJson);
-            (void)UnresolvedPELs::populate(bus, unresolvedRecords,
-                                           faultLogJson);
+                                                errorlog);
+            (void)UnresolvedPELs::populate(bus, unresolvedRecords, errorlog);
+            nlohmann::json jsonServiceEvent;
+            jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(errorlog);
+            faultLogJson.emplace_back(jsonServiceEvent);
 
             //
             // deconfigured records count
