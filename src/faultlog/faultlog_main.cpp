@@ -19,6 +19,7 @@
 #include <util.hpp>
 
 #include <iostream>
+#include <unordered_set>
 #include <vector>
 extern "C"
 {
@@ -80,7 +81,7 @@ void createNagPel(sdbusplus::bus::bus& bus,
 {
     //
     // serviceable records count
-    int guardCount = GuardWithEidRecords::getCount(unresolvedRecords);
+    int guardCount = GuardWithEidRecords::getCount(bus, unresolvedRecords);
     int unresolvedPelsCount = UnresolvedPELs::getCount(bus, ignorePwrFanPel);
 
     //

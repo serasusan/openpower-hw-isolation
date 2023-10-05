@@ -6,6 +6,7 @@
 #include <phosphor-logging/lg2.hpp>
 #include <poweron_time.hpp>
 #include <util.hpp>
+
 extern "C"
 {
 #include <libpdbg.h>
@@ -58,9 +59,18 @@ static int getGuardedTarget(struct pdbg_target* target, void* priv)
     return 0;
 }
 
-int GuardWithEidRecords::getCount(const GuardRecords& guardRecords)
+int GuardWithEidRecords::getCount(sdbusplus::bus::bus& bus,
+                                  const GuardRecords& guardRecords)
 {
-    int count = 0;
+    // An error could create single PEL but multiple guard records, while
+    // processing guard records do not create multiple error log sections
+    // as the callout data retrieved from the PEL will be the same, rather
+    // add only resource actions which differs and is based on guarded target.
+    // 0x00000001 | 0x89007371 | predictive      |
+    //  physical:sys-0/node-0/proc-2/mc-0/mi-0/mcc-1/omi-1
+    // 0x00000003 | 0x89007371 | predictive      |
+    //  physical:sys-0/node-0/ocmb_chip-19
+    std::vector<uint32_t> liProcessedPels;
     for (const auto& elem : guardRecords)
     {
         // ignore manual guard records
@@ -68,15 +78,110 @@ int GuardWithEidRecords::getCount(const GuardRecords& guardRecords)
         {
             continue;
         }
-        count += 1;
+        auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
+        if (!physicalPath.has_value())
+        {
+            lg2::error("Failed to get physical path for record {RECORD_ID}",
+                       "RECORD_ID", elem.recordId);
+            continue;
+        }
+
+        GuardedTarget guardedTarget(*physicalPath);
+        pdbg_target_traverse(nullptr, getGuardedTarget, &guardedTarget);
+        if (guardedTarget.target == nullptr)
+        {
+            lg2::error("Failed to find the pdbg target for the guarded "
+                       "target {RECORD_ID}",
+                       "RECORD_ID", elem.recordId);
+            continue;
+        }
+        ATTR_HWAS_STATE_Type hwasState;
+        if (DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target, hwasState))
+        {
+            lg2::error("Failed to get HWAS state of the guarded "
+                       "target {RECORD_ID}",
+                       "RECORD_ID", elem.recordId);
+            continue;
+        }
+        bool dbusErrorObjFound = true;
+        uint32_t bmcLogId = 0;
+        try
+        {
+            auto method = bus.new_method_call(
+                "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
+                "org.open_power.Logging.PEL", "GetBMCLogIdFromPELId");
+
+            method.append(static_cast<uint32_t>(elem.elogId));
+            auto resp = bus.call(method);
+            resp.read(bmcLogId);
+        }
+        catch (const sdbusplus::exception::SdBusError& ex)
+        {
+            dbusErrorObjFound = false;
+            lg2::info(
+                "PEL might be deleted but guard entry is around {ELOG_ID)",
+                "ELOG_ID", elem.elogId);
+        }
+        uint32_t plid = 0;
+        if (dbusErrorObjFound)
+        {
+            Properties pelEntryProp;
+            std::string objPath = "/xyz/openbmc_project/logging/entry/" +
+                                  std::to_string(bmcLogId);
+            auto pelEntryMethod = bus.new_method_call(
+                "xyz.openbmc_project.Logging", objPath.c_str(),
+                "org.freedesktop.DBus.Properties", "GetAll");
+            pelEntryMethod.append("org.open_power.Logging.PEL.Entry");
+            auto pelEntryReply = bus.call(pelEntryMethod);
+            pelEntryReply.read(pelEntryProp);
+            for (const auto& [prop, propValue] : pelEntryProp)
+            {
+                if (prop == "PlatformLogID")
+                {
+                    auto plidPtr = std::get_if<uint32_t>(&propValue);
+                    if (plidPtr != nullptr)
+                    {
+                        plid = *plidPtr;
+                    }
+                }
+            }
+        }
+        // D-Bus error object might be deleted
+        else
+        {
+            // hwas state will be updated only during reipl till then plid will
+            // be zero, if zero assume it as new serviceable event else check if
+            // it is already processed
+            plid = static_cast<uint32_t>(hwasState.deconfiguredByEid);
+        }
+
+        // plid could be zero if pel is deleted so do not ignore those guard
+        // records
+        if (plid != 0)
+        {
+            // A single PEL could capture multiple guard records callouts so
+            // ignore a guard record if already cpatured as part of a PEL
+            if (std::find(liProcessedPels.begin(), liProcessedPels.end(),
+                          plid) != liProcessedPels.end())
+            {
+                lg2::info("Ignoring PEL as it has been already processed with "
+                          "another guard record {PEL_ID}",
+                          "PEL_ID", plid);
+                continue;
+            }
+        }
+        liProcessedPels.push_back(plid);
     }
-    return count;
+    return liProcessedPels.size();
 }
 
 void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                                    const GuardRecords& guardRecords,
-                                   json& jsonNag)
+                                   json& jsonServEvent)
 {
+    // to allow duplicte pels that are deleted which will have plid as zero till
+    // reipl
+    std::multimap<uint32_t, json> processedPelMap;
 
     for (const auto& elem : guardRecords)
     {
@@ -87,7 +192,35 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             {
                 continue;
             }
+            auto physicalPath =
+                openpower::guard::getPhysicalPath(elem.targetId);
+            if (!physicalPath.has_value())
+            {
+                lg2::error("Failed to get physical path for record {RECORD_ID}",
+                           "RECORD_ID", elem.recordId);
+                continue;
+            }
+
+            GuardedTarget guardedTarget(*physicalPath);
+            pdbg_target_traverse(nullptr, getGuardedTarget, &guardedTarget);
+            if (guardedTarget.target == nullptr)
+            {
+                lg2::error("Failed to find the pdbg target for the guarded "
+                           "target {RECORD_ID}",
+                           "RECORD_ID", elem.recordId);
+                continue;
+            }
+            ATTR_HWAS_STATE_Type hwasState;
+            if (DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target, hwasState))
+            {
+                lg2::error("Failed to get HWAS state of the guarded "
+                           "target {RECORD_ID}",
+                           "RECORD_ID", elem.recordId);
+                continue;
+            }
             uint32_t bmcLogId = 0;
+            uint32_t plid = 0;
+            json jsonErrorLog = json::object();
             bool dbusErrorObjFound = true;
             try
             {
@@ -104,12 +237,9 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             {
                 dbusErrorObjFound = false;
                 lg2::info(
-                    "PEL might be deleted but guard entry is around {ELOG_ID)",
+                    "PEL might be deleted but guard entry is around {ELOG_ID}",
                     "ELOG_ID", elem.elogId);
             }
-
-            json jsonErrorLog = json::object();
-            json jsonErrorLogSection = json::array();
             if (dbusErrorObjFound)
             {
                 std::string callouts;
@@ -143,7 +273,6 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                         }
                     }
                 } // endfor
-                uint32_t plid = 0;
                 uint64_t timestamp = 0;
                 Properties pelEntryProp;
                 auto pelEntryMethod = bus.new_method_call(
@@ -178,46 +307,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                 jsonErrorLog["SRC"] = refCode;
                 jsonErrorLog["DATE_TIME"] = epochTimeToBCD(timestamp);
             }
-
-            // add resource actions section
-            auto physicalPath =
-                openpower::guard::getPhysicalPath(elem.targetId);
-            if (!physicalPath.has_value())
-            {
-                lg2::error("Failed to get physical path for record {RECORD_ID}",
-                           "RECORD_ID", elem.recordId);
-                continue;
-            }
-
-            GuardedTarget guardedTarget(*physicalPath);
-            pdbg_target_traverse(nullptr, getGuardedTarget, &guardedTarget);
-            if (guardedTarget.target == nullptr)
-            {
-                lg2::error("Failed to find the pdbg target for the guarded "
-                           "target {RECORD_ID}",
-                           "RECORD_ID", elem.recordId);
-                continue;
-            }
-            json jsonResource = json::object();
-            jsonResource["TYPE"] = pdbgTargetName(guardedTarget.target);
-            std::string state = stateDeconfigured;
-            ATTR_HWAS_STATE_Type hwasState;
-            if (!DT_GET_PROP(ATTR_HWAS_STATE, guardedTarget.target, hwasState))
-            {
-                if (hwasState.functional)
-                {
-                    state = stateConfigured;
-                }
-            }
-            jsonResource["CURRENT_STATE"] = std::move(state);
-
-            jsonResource["REASON_DESCRIPTION"] =
-                getGuardReason(guardRecords, *physicalPath);
-
-            jsonResource["GUARD_RECORD"] = true;
-
-            // error object is deleted add what ever data is found
-            if (!dbusErrorObjFound)
+            else
             {
                 json jsonCallout = json::object();
                 json sectionJson = json::object();
@@ -231,27 +321,85 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
 
                 sectionJson["Callout Count"] = 1;
                 sectionJson["Callouts"] = jsonCallout;
-                jsonErrorLog["PLID"] =
-                    std::to_string(hwasState.deconfiguredByEid);
+                std::stringstream ss;
+                ss << std::hex << "0x" << hwasState.deconfiguredByEid;
+                jsonErrorLog["PLID"] = ss.str();
+                plid = hwasState.deconfiguredByEid;
                 jsonErrorLog["Callout Section"] = sectionJson;
                 jsonErrorLog["SRC"] = 0;
                 jsonErrorLog["DATE_TIME"] = "00/00/0000 00:00:00";
             }
 
-            jsonErrorLogSection.push_back(std::move(jsonErrorLog));
-            json jsonEventData = json::object();
-            jsonEventData["RESOURCE_ACTIONS"] = std::move(jsonResource);
-            jsonErrorLogSection.push_back(jsonEventData);
+            // populate resource actions section
+            json jsonResource = json::object();
+            jsonResource["TYPE"] = pdbgTargetName(guardedTarget.target);
+            std::string state = stateDeconfigured;
+            if (hwasState.functional)
+            {
+                state = stateConfigured;
+            }
+            jsonResource["CURRENT_STATE"] = std::move(state);
 
-            json jsonErrlogObj = json::object();
-            jsonErrlogObj["CEC_ERROR_LOG"] = std::move(jsonErrorLogSection);
-            jsonNag.emplace_back(jsonErrlogObj);
+            jsonResource["REASON_DESCRIPTION"] =
+                getGuardReason(guardRecords, *physicalPath);
+
+            jsonResource["GUARD_RECORD"] = true;
+
+            // An error could create single PEL but multiple guard records,
+            // while processing guard records do not create multiple error log
+            // sections as the callout data retrieved from the PEL will be the
+            // same, rather add only resource actions which differs and is based
+            // on guarded target. 0x00000001 | 0x89007371 | predictive      |
+            //      physical:sys-0/node-0/proc-2/mc-0/mi-0/mcc-1/omi-1
+            // 0x00000003 | 0x89007371 | predictive      |
+            //      physical:sys-0/node-0/ocmb_chip-19
+
+            // if PEL is deleted plid will be zero till reipl, for them
+            // consider it as new cec_error_log
+            bool fNewSection = true;
+            if (plid != 0)
+            {
+                auto it = processedPelMap.find(plid);
+                if (it != processedPelMap.end())
+                {
+                    // add resource actions to existing errorlog section
+                    lg2::info("Ignoring PEL callout data as it is already "
+                              "processed with {PEL_ID}",
+                              "PEL_ID", plid);
+                    json jsonResActions = json::object();
+                    jsonResActions["RESOURCE_ACTIONS"] =
+                        std::move(jsonResource);
+                    it->second.push_back(jsonResActions);
+                    fNewSection = false;
+                }
+            }
+            // create new errorlog section if plid is zero or if it is
+            // not processed already
+            if (fNewSection)
+            {
+                json jsonErrorLogSection = json::array();
+                jsonErrorLogSection.push_back(std::move(jsonErrorLog));
+
+                json jsonResActions = json::object();
+                jsonResActions["RESOURCE_ACTIONS"] = std::move(jsonResource);
+                jsonErrorLogSection.push_back(jsonResActions);
+
+                processedPelMap.emplace(plid, jsonErrorLogSection);
+            }
         }
         catch (const std::exception& ex)
         {
             lg2::info("Failed to add guard record {ELOG_ID}, {ERROR}",
                       "ELOG_ID", elem.elogId, "ERROR", ex);
         }
+    }
+
+    // add all the cecerrroglog json objects to the servicable event json object
+    for (const auto& pair : processedPelMap)
+    {
+        json jsonErrlogObj = json::object();
+        jsonErrlogObj["CEC_ERROR_LOG"] = std::move(pair.second);
+        jsonServEvent.emplace_back(jsonErrlogObj);
     }
 }
 } // namespace openpower::faultlog
