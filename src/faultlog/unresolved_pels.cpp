@@ -463,9 +463,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
 
             json jsonErrlogObj = json::object();
             jsonErrlogObj["CEC_ERROR_LOG"] = std::move(jsonErrorLogSection);
-            json jsonServiceEvent = json::object();
-            jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(jsonErrlogObj);
-            jsonNag.push_back(std::move(jsonServiceEvent));
+            jsonNag.emplace_back(jsonErrlogObj);
         }
     }
     catch (const sdbusplus::exception::SdBusError& ex)

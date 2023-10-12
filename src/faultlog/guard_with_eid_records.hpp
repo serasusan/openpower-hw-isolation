@@ -27,20 +27,22 @@ class GuardWithEidRecords
   public:
     /** @brief Get guard records with associated error log count
      *
+     *  @param[in] bus - D-Bus to attach to
      *  @param[in] guardRecords - hardware isolated records to parse
      *
      *  @return 0 if no records are found else count of records
      */
-    static int getCount(const GuardRecords& guardRecords);
+    static int getCount(sdbusplus::bus::bus& bus,
+                        const GuardRecords& guardRecords);
 
     /** @brief Populate permanent hardware errors to NAG json file
      *
      *  @param[in] bus - D-Bus to attach to
      *  @param[in] guardRecords - hardware isolated records to parse
-     *  @param[in] jsonNag - Json file capturing serviceable events
+     *  @param[in] jsonServEvent - Json capturing cec error log data
      */
     static void populate(sdbusplus::bus::bus& bus,
                          const GuardRecords& guardRecords,
-                         nlohmann::json& jsonNag);
+                         nlohmann::json& jsonServEvent);
 };
 } // namespace openpower::faultlog
