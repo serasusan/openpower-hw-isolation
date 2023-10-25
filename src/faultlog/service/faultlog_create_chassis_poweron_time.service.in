@@ -9,6 +9,7 @@ ConditionPathExists=!/run/openbmc/chassis@0-on
 [Service]
 Restart=no
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=@bindir@/faultlog-poweron-time
 
 [Install]
