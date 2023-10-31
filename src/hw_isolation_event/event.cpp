@@ -2,13 +2,12 @@
 
 #include "hw_isolation_event/event.hpp"
 
-#include <fmt/format.h>
-
 #include <cereal/archives/binary.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 
 #include <ctime>
 #include <filesystem>
+#include <format>
 #include <fstream>
 
 // Associate Event Class with version number
@@ -63,7 +62,7 @@ Event::Event(sdbusplus::bus::bus& bus, const std::string& objPath,
 
 Event::~Event()
 {
-    fs::path path{fmt::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
+    fs::path path{std::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
     if (fs::exists(path))
     {
         fs::remove(path);
@@ -72,7 +71,7 @@ Event::~Event()
 
 void Event::serialize()
 {
-    fs::path path{fmt::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
+    fs::path path{std::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
     try
     {
         std::ofstream os(path.c_str(), std::ios::binary);
@@ -81,7 +80,7 @@ void Event::serialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during serialize the "
+        log<level::ERR>(std::format("Exception: [{}] during serialize the "
                                     "hardware isolation status event into {}",
                                     e.what(), path.string())
                             .c_str());
@@ -91,7 +90,7 @@ void Event::serialize()
 
 void Event::deserialize()
 {
-    fs::path path{fmt::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
+    fs::path path{std::format(HW_ISOLATION_EVENT_PERSIST_PATH, _eventId)};
     try
     {
         if (fs::exists(path))
@@ -103,7 +102,7 @@ void Event::deserialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during deserialize the "
+        log<level::ERR>(std::format("Exception: [{}] during deserialize the "
                                     "hardware isolation status event from {}",
                                     e.what(), path.string())
                             .c_str());

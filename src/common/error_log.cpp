@@ -6,10 +6,10 @@
 #include "common/utils.hpp"
 
 #include <fcntl.h>
-#include <fmt/format.h>
 
 #include <phosphor-logging/elog.hpp>
 
+#include <format>
 #include <iomanip>
 #include <sstream>
 
@@ -67,7 +67,7 @@ void FFDCFile::createFFDCFile()
 
     if (_fd == -1)
     {
-        log<level::ERR>(fmt::format("Failed to create FFDC file [{}]"
+        log<level::ERR>(std::format("Failed to create FFDC file [{}]"
                                     "errorno [{}] and errormsg [{}]",
                                     _fileName, errno, strerror(errno))
                             .c_str());
@@ -81,7 +81,7 @@ void FFDCFile::writeFFDCData()
 
     if (rc == -1)
     {
-        log<level::ERR>(fmt::format("Failed to write FFDC info in the "
+        log<level::ERR>(std::format("Failed to write FFDC info in the "
                                     "file [{}], errorno[{}], errormsg[{}]",
                                     _fileName, errno, strerror(errno))
                             .c_str());
@@ -89,7 +89,7 @@ void FFDCFile::writeFFDCData()
     }
     else if (rc != static_cast<ssize_t>(_data.size()))
     {
-        log<level::WARNING>(fmt::format("Could not write all FFDC info "
+        log<level::WARNING>(std::format("Could not write all FFDC info "
                                         "in the file[{}], written byte[{}] "
                                         "and total byt[{}]",
                                         _fileName, rc, _data.size())
@@ -103,7 +103,7 @@ void FFDCFile::setFFDCFileSeekPos()
 
     if (rc == -1)
     {
-        log<level::ERR>(fmt::format("Failed to set SEEK_SET for the FFDC "
+        log<level::ERR>(std::format("Failed to set SEEK_SET for the FFDC "
                                     "file[{}], errorno[{}] and errormsg({})",
                                     _fileName, errno, strerror(errno))
                             .c_str());
@@ -133,7 +133,7 @@ FFDCFiles::FFDCFiles(const bool collectTraces, const json& calloutsDetails)
              * possible to create the error log.
              */
             log<level::ERR>(
-                fmt::format("Exception [{}], failed to collect traces",
+                std::format("Exception [{}], failed to collect traces",
                             e.what())
                     .c_str());
         }
@@ -153,7 +153,7 @@ FFDCFiles::FFDCFiles(const bool collectTraces, const json& calloutsDetails)
              * possible to create the error log.
              */
             log<level::ERR>(
-                fmt::format("Exception [{}], failed to include callout details",
+                std::format("Exception [{}], failed to include callout details",
                             e.what())
                     .c_str());
         }
@@ -188,7 +188,7 @@ std::optional<std::string>
         {
             // Should not happen as per sd_journal_get_data documentation
             log<level::ERR>(
-                fmt::format("Failed to find the journal field "
+                std::format("Failed to find the journal field "
                             "separator [=] in the retrieved field [{}]",
                             fieldValue)
                     .c_str());
@@ -197,7 +197,7 @@ std::optional<std::string>
     else
     {
         log<level::ERR>(
-            fmt::format("Failed to get the given journal "
+            std::format("Failed to get the given journal "
                         "field [{}] value errorno [{}] and errormsg [{}]",
                         fieldName, rc, strerror(rc))
                 .c_str());
@@ -307,7 +307,7 @@ std::optional<std::vector<std::string>>
         else
         {
             log<level::INFO>(
-                fmt::format("Dont have any systemd journal traces"
+                std::format("Dont have any systemd journal traces"
                             "for the given field name [{}] and value [{}].",
                             fieldName, fieldValue)
                     .c_str());
@@ -316,7 +316,7 @@ std::optional<std::vector<std::string>>
     else
     {
         log<level::ERR>(
-            fmt::format("Failed to get the systemd journal "
+            std::format("Failed to get the systemd journal "
                         "traces for the given field name [{}] and value [{}]. "
                         "ErrorNo [{}] and ErrorMsg [{}]",
                         fieldName, fieldValue, rc, strerror(rc))
@@ -405,7 +405,7 @@ void createErrorLog(const std::string& errMsg, const Level& errSeverity,
         // Don't throw the exception, we should allow the caller to proceed
         // further since caller might call this in the failure case.
         log<level::ERR>(
-            fmt::format("D-Bus Exception [{}], failed to create "
+            std::format("D-Bus Exception [{}], failed to create "
                         "the error log for the error [{}]. ObjectPath [{}] "
                         "and Interface [{}]",
                         e.what(), errMsg, type::LoggingObjectPath,
@@ -417,7 +417,7 @@ void createErrorLog(const std::string& errMsg, const Level& errSeverity,
         // Don't throw the exception, we should allow the caller to proceed
         // further since caller might call this in the failure case.
         log<level::ERR>(
-            fmt::format("Exception [{}], failed to create the error log "
+            std::format("Exception [{}], failed to create the error log "
                         "for the error [{}]",
                         e.what(), errMsg)
                 .c_str());

@@ -5,12 +5,11 @@
 #include "common/utils.hpp"
 #include "hw_isolation_record/manager.hpp"
 
-#include <fmt/format.h>
-
 #include <cereal/archives/binary.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 
 #include <ctime>
+#include <format>
 #include <fstream>
 
 // Associate Entry Class with version number
@@ -69,7 +68,7 @@ Entry::Entry(sdbusplus::bus::bus& bus, const std::string& objPath,
 
 Entry::~Entry()
 {
-    fs::path path{fmt::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
+    fs::path path{std::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
     if (fs::exists(path))
     {
         fs::remove(path);
@@ -108,7 +107,7 @@ void Entry::delete_()
     // isolated hardware entry
     if (severity() != EntrySeverity::Manual)
     {
-        log<level::ERR>(fmt::format("User is not allowed to clear the system "
+        log<level::ERR>(std::format("User is not allowed to clear the system "
                                     "isolated hardware entry")
                             .c_str());
         throw type::CommonError::InsufficientPermission();
@@ -129,7 +128,7 @@ EntryRecordId Entry::getEntryRecId() const
 
 void Entry::serialize()
 {
-    fs::path path{fmt::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
+    fs::path path{std::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
     try
     {
         std::ofstream os(path.c_str(), std::ios::binary);
@@ -138,7 +137,7 @@ void Entry::serialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during serialize the "
+        log<level::ERR>(std::format("Exception: [{}] during serialize the "
                                     "hardware isolation entry into {}",
                                     e.what(), path.string())
                             .c_str());
@@ -148,7 +147,7 @@ void Entry::serialize()
 
 bool Entry::deserialize()
 {
-    fs::path path{fmt::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
+    fs::path path{std::format(HW_ISOLATION_ENTRY_PERSIST_PATH, _entryRecordId)};
     try
     {
         if (fs::exists(path))
@@ -162,7 +161,7 @@ bool Entry::deserialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during deserialize the "
+        log<level::ERR>(std::format("Exception: [{}] during deserialize the "
                                     "hardware isolation entry from {}",
                                     e.what(), path.string())
                             .c_str());
@@ -191,7 +190,7 @@ std::optional<EntrySeverity>
 
         default:
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Unsupported GardType [{}] was given ",
                     "to get the hardware isolation entry severity type",
                     static_cast<
@@ -216,7 +215,7 @@ std::optional<openpower_guard::GardType>
 
         default:
             log<level::ERR>(
-                fmt::format("Unsupported EntrySeverity [{}] "
+                std::format("Unsupported EntrySeverity [{}] "
                             "was given to the get openpower gard type",
                             EntryInterface::convertTypeToString(severity))
                     .c_str());

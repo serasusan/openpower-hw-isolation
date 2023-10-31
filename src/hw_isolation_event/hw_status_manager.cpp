@@ -14,11 +14,10 @@ extern "C"
 #include "hw_isolation_event/hw_status_manager.hpp"
 #include "hw_isolation_event/openpower_hw_status.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
 
 #include <filesystem>
+#include <format>
 
 namespace hw_isolation
 {
@@ -80,7 +79,7 @@ Manager::Manager(sdbusplus::bus::bus& bus, const sdeventplus::Event& eventLoop,
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] while adding the D-Bus match rules",
+            std::format("Exception [{}] while adding the D-Bus match rules",
                         e.what())
                 .c_str());
         error_log::createErrorLog(error_log::HwIsolationGenericErrMsg,
@@ -131,7 +130,7 @@ std::optional<sdbusplus::message::object_path> Manager::createEvent(
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}], so failed to create hardware "
+            std::format("Exception [{}], so failed to create hardware "
                         "status event",
                         e.what())
                 .c_str());
@@ -161,7 +160,7 @@ std::pair<event::EventMsg, event::EventSeverity>
             return std::make_pair("Manual", event::EventSeverity::Ok);
         default:
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Unsupported hardware isolation entry severity [{}]",
                     record::entry::EntryInterface::convertTypeToString(
                         recSeverity))
@@ -210,7 +209,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                     if (DT_GET_PROP(ATTR_HWAS_STATE, tgt, hwasState))
                     {
                         log<level::ERR>(
-                            fmt::format("Skipping to create the hardware "
+                            std::format("Skipping to create the hardware "
                                         "status event because failed to get "
                                         "ATTR_HWAS_STATE from [{}]",
                                         pdbg_target_path(tgt))
@@ -228,7 +227,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                         if (DT_GET_PROP(ATTR_PHYS_BIN_PATH, tgt, physBinPath))
                         {
                             log<level::ERR>(
-                                fmt::format(
+                                std::format(
                                     "Skipping to create the hardware "
                                     "status event because failed to get "
                                     "ATTR_PHYS_BIN_PATH from [{}]",
@@ -255,7 +254,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                         if (!hwInventoryPath.has_value())
                         {
                             log<level::ERR>(
-                                fmt::format(
+                                std::format(
                                     "Skipping to create the hardware "
                                     "status event because unable to find "
                                     "the inventory path for the given "
@@ -382,7 +381,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                                 if (!logObjPath.has_value())
                                 {
                                     log<level::ERR>(
-                                        fmt::format(
+                                        std::format(
                                             "Skipping to create the hardware "
                                             "status event because unable to "
                                             "find the bmc error log object "
@@ -423,7 +422,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                         if (!eventObjPath.has_value())
                         {
                             log<level::ERR>(
-                                fmt::format(
+                                std::format(
                                     "Skipping to create the hardware "
                                     "status event because unable to create "
                                     "the event object for the given hardware "
@@ -441,7 +440,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                 catch (const std::exception& e)
                 {
                     log<level::ERR>(
-                        fmt::format("Exception [{}], skipping to create "
+                        std::format("Exception [{}], skipping to create "
                                     "the hardware status event for the given "
                                     "hardware [{}]",
                                     e.what(), pdbg_target_path(tgt))
@@ -491,7 +490,7 @@ void Manager::handleDeallocatedHw()
         return;
     }
 
-    log<level::INFO>(fmt::format("{} is deallocated at the host runtime",
+    log<level::INFO>(std::format("{} is deallocated at the host runtime",
                                  deallocatedHw.first)
                          .c_str());
 
@@ -510,7 +509,7 @@ void Manager::handleDeallocatedHw()
                                     deallocatedHw.first, eventErrLogPath);
     if (!eventObjPath.has_value())
     {
-        log<level::ERR>(fmt::format("Failed to create the event for {} "
+        log<level::ERR>(std::format("Failed to create the event for {} "
                                     "that was deallocated at the host "
                                     "runtime",
                                     deallocatedHw.first)
@@ -553,7 +552,7 @@ void Manager::onOperationalStatusChange(sdbusplus::message::message& message)
                 else
                 {
                     log<level::ERR>(
-                        fmt::format(
+                        std::format(
                             "D-Bus Message signature [{}] "
                             "Failed to read the Functional property value "
                             "while changed",
@@ -572,7 +571,7 @@ void Manager::onOperationalStatusChange(sdbusplus::message::message& message)
     catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Exception [{}] and D-Bus Message signature [{}] "
                 "so failed to get the OperationalStatus properties value "
                 "while changed",
@@ -593,7 +592,7 @@ void Manager::watchOperationalStatusChange()
     if (!objsToWatch.has_value())
     {
         log<level::ERR>(
-            fmt::format("Failed to get the {} objects from the inventory "
+            std::format("Failed to get the {} objects from the inventory "
                         "to watch Functional property",
                         CpuCoreIface)
                 .c_str());
@@ -623,7 +622,7 @@ void Manager::watchOperationalStatusChange()
         {
             // Just log error and continue with next object
             log<level::ERR>(
-                fmt::format("Exception [{}] while adding the D-Bus match "
+                std::format("Exception [{}] while adding the D-Bus match "
                             "rules for {} to watch OperationalStatus",
                             e.what(), objToWatch.str)
                     .c_str());
@@ -654,7 +653,7 @@ void Manager::onHostStateChange(sdbusplus::message::message& message)
                         "xyz.openbmc_project.State.Host.HostState.Quiesced")
                     {
                         log<level::INFO>(
-                            fmt::format("HostState is {}, pull the deconfig "
+                            std::format("HostState is {}, pull the deconfig "
                                         "reason from the cec device tree.",
                                         *propVal)
                                 .c_str());
@@ -666,7 +665,7 @@ void Manager::onHostStateChange(sdbusplus::message::message& message)
                         if (!_watcherOnOperationalStatus.empty())
                         {
                             log<level::INFO>(
-                                fmt::format("HostState is {}, remove runtime "
+                                std::format("HostState is {}, remove runtime "
                                             "deallocation watcher.",
                                             *propVal)
                                     .c_str());
@@ -677,7 +676,7 @@ void Manager::onHostStateChange(sdbusplus::message::message& message)
                 else
                 {
                     log<level::ERR>(
-                        fmt::format("D-Bus Message signature [{}] "
+                        std::format("D-Bus Message signature [{}] "
                                     "Failed to read the CurrentHostState "
                                     "property value while changed",
                                     message.get_signature())
@@ -695,7 +694,7 @@ void Manager::onHostStateChange(sdbusplus::message::message& message)
     catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] and D-Bus Message signature [{}] "
+            std::format("Exception [{}] and D-Bus Message signature [{}] "
                         "so failed to get the CurrentHostState property value "
                         "while changed",
                         e.what(), message.get_signature())
@@ -726,7 +725,7 @@ void Manager::onBootProgressChange(sdbusplus::message::message& message)
                                     "ProgressStages.SystemInitComplete")
                     {
                         log<level::INFO>(
-                            fmt::format("BootProgress is {}, pull the deconfig "
+                            std::format("BootProgress is {}, pull the deconfig "
                                         "reason from the cec device tree.",
                                         *propVal)
                                 .c_str());
@@ -737,7 +736,7 @@ void Manager::onBootProgressChange(sdbusplus::message::message& message)
                              "ProgressStages.OSRunning")
                     {
                         log<level::INFO>(
-                            fmt::format("BootProgress is {}, watch "
+                            std::format("BootProgress is {}, watch "
                                         "Functional property for the runtime "
                                         "deallocation",
                                         *propVal)
@@ -748,7 +747,7 @@ void Manager::onBootProgressChange(sdbusplus::message::message& message)
                 else
                 {
                     log<level::ERR>(
-                        fmt::format("D-Bus Message signature [{}] "
+                        std::format("D-Bus Message signature [{}] "
                                     "Failed to read the BootProgress"
                                     "property value while changed",
                                     message.get_signature())
@@ -766,7 +765,7 @@ void Manager::onBootProgressChange(sdbusplus::message::message& message)
     catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] and D-Bus Message signature [{}] "
+            std::format("Exception [{}] and D-Bus Message signature [{}] "
                         "so failed to get the BootProgress property value "
                         "while changed",
                         e.what(), message.get_signature())

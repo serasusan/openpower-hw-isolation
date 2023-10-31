@@ -4,9 +4,9 @@
 
 #include "common_types.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
+
+#include <format>
 
 namespace hw_isolation
 {
@@ -77,7 +77,7 @@ T getDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] to get the given dbus property "
+            std::format("Exception [{}] to get the given dbus property "
                         "[{}] interface [{}] for object path [{}]",
                         e.what(), propName, propInterface, objPath)
                 .c_str());
@@ -87,7 +87,7 @@ T getDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
     catch (const std::bad_variant_access& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] to get the given dbus property "
+            std::format("Exception [{}] to get the given dbus property "
                         "[{}] interface [{}] for object path [{}]",
                         e.what(), propName, propInterface, objPath)
                 .c_str());
@@ -130,7 +130,7 @@ void setDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] to set the given dbus property "
+            std::format("Exception [{}] to set the given dbus property "
                         "[{}] interface [{}] for object path [{}]",
                         e.what(), propName, propInterface, objPath)
                 .c_str());

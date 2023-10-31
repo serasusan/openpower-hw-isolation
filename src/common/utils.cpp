@@ -44,7 +44,7 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}] to get dbus service name "
+        log<level::ERR>(std::format("Exception [{}] to get dbus service name "
                                     "for object [{}] and interface [{}]",
                                     e.what(), path, interface)
                             .c_str());
@@ -85,7 +85,7 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
                       });
 
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "The given object path [{}] and interface [{}] hosted by "
                 "more than one services [{}]",
                 path, interface, serviceNameList)
@@ -120,7 +120,7 @@ void isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
     if (!isHwIosolationSettingEnabled(bus))
     {
         log<level::INFO>(
-            fmt::format("Hardware deisolation is not allowed "
+            std::format("Hardware deisolation is not allowed "
                         "since the HardwareIsolation setting is disabled")
                 .c_str());
         throw type::CommonError::Unavailable();
@@ -135,7 +135,7 @@ void isHwDeisolationAllowed(sdbusplus::bus::bus& bus)
     if (Chassis::convertPowerStateFromString(systemPowerState) !=
         Chassis::PowerState::Off)
     {
-        log<level::ERR>(fmt::format("Manual hardware de-isolation is allowed "
+        log<level::ERR>(std::format("Manual hardware de-isolation is allowed "
                                     "only when chassis powerstate is off")
                             .c_str());
         throw type::CommonError::NotAllowed();
@@ -179,7 +179,7 @@ void setEnabledProperty(sdbusplus::bus::bus& bus,
         // throw sdbusplus::exception::SdBusError(
         //    const_cast<sd_bus_error*>(e.get_error()), "HW-Isolation");
         log<level::ERR>(
-            fmt::format("Exception [{}], failed to get service name", e.what())
+            std::format("Exception [{}], failed to get service name", e.what())
                 .c_str());
     }
 
@@ -241,7 +241,7 @@ void setEnabledProperty(sdbusplus::bus::bus& bus,
         // throw sdbusplus::exception::SdBusError(
         //    const_cast<sd_bus_error*>(e.get_error()), "HW-Isolation");
         log<level::ERR>(
-            fmt::format("Exception [{}], failed to set enable D-Bus property",
+            std::format("Exception [{}], failed to set enable D-Bus property",
                         e.what())
                 .c_str());
     }
@@ -278,7 +278,7 @@ std::optional<sdbusplus::message::object_path>
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] when trying to get BMC log path "
+            std::format("Exception [{}] when trying to get BMC log path "
                         "for the given EID (aka PEL ID) [{}]",
                         e.what(), eid)
                 .c_str());
@@ -309,7 +309,7 @@ std::optional<type::InstanceId> getInstanceId(const std::string& objPathSegment)
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}] to get instance id from "
+        log<level::ERR>(std::format("Exception [{}] to get instance id from "
                                     "the given D-Bus object path segment [{}]",
                                     e.what(), objPathSegment)
                             .c_str());
@@ -351,7 +351,7 @@ std::optional<std::vector<sdbusplus::message::object_path>>
     catch (const sdbusplus::exception::SdBusError& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] to get childs inventory path "
+            std::format("Exception [{}] to get childs inventory path "
                         "for given objPath[{}] interface[{}]",
                         e.what(), parentObjPath.str, interfaceName)
                 .c_str());

@@ -4,9 +4,9 @@
 
 #include "common/utils.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
+
+#include <format>
 
 namespace hw_isolation
 {
@@ -255,7 +255,7 @@ std::optional<
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}] to get the given object "
+        log<level::ERR>(std::format("Exception [{}] to get the given object "
                                     "[{}] interfaces",
                                     e.what(), dbusObjPath.str)
                             .c_str());
@@ -289,7 +289,7 @@ std::optional<
 
     if (inventoryItemIfaces.empty())
     {
-        log<level::ERR>(fmt::format("The given object [{}] does not contains "
+        log<level::ERR>(std::format("The given object [{}] does not contains "
                                     "any inventory item interface",
                                     dbusObjPath.str)
                             .c_str());
@@ -311,7 +311,7 @@ std::optional<
                       });
 
         log<level::ERR>(
-            fmt::format("Either the same interface is hosted "
+            std::format("Either the same interface is hosted "
                         "by different services or different inventory item "
                         "interfaces are hosted in the same object [{}]. "
                         "ObjectData [{}]",
@@ -369,7 +369,7 @@ std::optional<sdbusplus::message::object_path>
     catch (const sdbusplus::exception::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] to get the given object [{}] parent "
+            std::format("Exception [{}] to get the given object [{}] parent "
                         "by using the given parent interface [{}]",
                         e.what(), isolateHardware.str, parentFruIfaceName._name)
                 .c_str());
@@ -379,7 +379,7 @@ std::optional<sdbusplus::message::object_path>
     if (parentObjs.empty())
     {
         log<level::ERR>(
-            fmt::format("The given object [{}] does not contain any parent "
+            std::format("The given object [{}] does not contain any parent "
                         "with the given parent interface [{}]",
                         isolateHardware.str, parentFruIfaceName._name)
                 .c_str());
@@ -390,7 +390,7 @@ std::optional<sdbusplus::message::object_path>
         // Should not happen, Always we will have one parent object with
         // the given parent interface for the given child object.
         log<level::ERR>(
-            fmt::format("The given object [{}] contain more than one parent "
+            std::format("The given object [{}] contain more than one parent "
                         "with the given parent interface [{}]",
                         isolateHardware.str, parentFruIfaceName._name)
                 .c_str());
@@ -410,7 +410,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
         if (isolateHardware.filename().starts_with("unit"))
         {
             log<level::ERR>(
-                fmt::format("Not allowed to isolate the given hardware [{}] "
+                std::format("Not allowed to isolate the given hardware [{}] "
                             "which is not modeled in BMC inventory",
                             isolateHardware.str)
                     .c_str());
@@ -421,7 +421,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
         if (!isolateHwDetails.has_value())
         {
             log<level::ERR>(
-                fmt::format("The given hardware inventory object [{}] "
+                std::format("The given hardware inventory object [{}] "
                             "item interface is not found in isolatable "
                             "hardware list",
                             isolateHardware.str)
@@ -489,7 +489,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
             if (!parentFruHwDetails.has_value())
             {
                 log<level::ERR>(
-                    fmt::format("Parent fru details for the given isolate "
+                    std::format("Parent fru details for the given isolate "
                                 "hardware object name [{}] is not found in "
                                 "isolatable hardware list",
                                 isolateHardware.filename())
@@ -546,7 +546,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
 
         if (!canGetPhysPath)
         {
-            log<level::ERR>(fmt::format("Given hardware [{}] is not found "
+            log<level::ERR>(std::format("Given hardware [{}] is not found "
                                         " in phal cec device tree",
                                         isolateHardware.str)
                                 .c_str());
@@ -557,7 +557,7 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}]", e.what()).c_str());
+        log<level::ERR>(std::format("Exception [{}]", e.what()).c_str());
         return std::nullopt;
     }
 }
@@ -591,7 +591,7 @@ std::optional<std::vector<sdbusplus::message::object_path>>
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}] to get inventory path for "
+        log<level::ERR>(std::format("Exception [{}] to get inventory path for "
                                     "the given location code [{}]",
                                     e.what(), unexpandedLocCode)
                             .c_str());
@@ -644,7 +644,7 @@ std::optional<struct pdbg_target*>
         if (dimmCount == 0)
         {
             log<level::ERR>(
-                fmt::format("Failed to get the parent dimm target "
+                std::format("Failed to get the parent dimm target "
                             "from phal cec device tree for the given phal cec "
                             "device tree target [{}]",
                             fruUnitDevTreePath)
@@ -654,7 +654,7 @@ std::optional<struct pdbg_target*>
         else if (dimmCount > 1)
         {
             log<level::ERR>(
-                fmt::format("More [{}] dimm targets are present "
+                std::format("More [{}] dimm targets are present "
                             "in phal cec device tree for the given phal cec "
                             " device tree target [{}]",
                             dimmCount, fruUnitDevTreePath)
@@ -674,7 +674,7 @@ std::optional<struct pdbg_target*>
         if (parentFruTarget == nullptr)
         {
             log<level::ERR>(
-                fmt::format("Failed to get the processor target from phal cec "
+                std::format("Failed to get the processor target from phal cec "
                             "device tree for the given target [{}]",
                             fruUnitDevTreePath)
                     .c_str());
@@ -699,7 +699,7 @@ std::optional<sdbusplus::message::object_path>
     {
         // The inventory object doesn't exist for the given location code.
         log<level::ERR>(
-            fmt::format("The inventory object does not exist for the given "
+            std::format("The inventory object does not exist for the given "
                         "location code [{}].",
                         fruDetails.first)
                 .c_str());
@@ -733,7 +733,7 @@ std::optional<sdbusplus::message::object_path>
         if (fruHwInvPath == inventoryPathList->end())
         {
             log<level::ERR>(
-                fmt::format("The inventory object does not exist for "
+                std::format("The inventory object does not exist for "
                             "the given location code [{}] and instance id [{}]",
                             fruDetails.first, fruDetails.second)
                     .c_str());
@@ -756,7 +756,7 @@ std::optional<sdbusplus::message::object_path>
     if (!parentFruPath.has_value())
     {
         log<level::ERR>(
-            fmt::format("Failed to get the parent fru [{}] inventory path "
+            std::format("Failed to get the parent fru [{}] inventory path "
                         "for the given device path [{}]",
                         MotherboardIface, clkTgtDevTreePath)
                 .c_str());
@@ -765,7 +765,7 @@ std::optional<sdbusplus::message::object_path>
     else if (parentFruPath->empty())
     {
         log<level::ERR>(
-            fmt::format("The parent fru [{}] inventory object is not exist "
+            std::format("The parent fru [{}] inventory object is not exist "
                         "for the given device path [{}]",
                         MotherboardIface, clkTgtDevTreePath)
                 .c_str());
@@ -774,7 +774,7 @@ std::optional<sdbusplus::message::object_path>
     else if (parentFruPath->size() > 1)
     {
         log<level::ERR>(
-            fmt::format("More than one parent fru [{}] inventory object is "
+            std::format("More than one parent fru [{}] inventory object is "
                         "exists for the given device path [{}]",
                         MotherboardIface, clkTgtDevTreePath)
                 .c_str());
@@ -800,7 +800,7 @@ std::optional<sdbusplus::message::object_path>
     if (pdbgTgtClass == nullptr)
     {
         log<level::ERR>(
-            fmt::format("The given hardware [{}] pdbg target class is missing, "
+            std::format("The given hardware [{}] pdbg target class is missing, "
                         "please make sure hardware unit is added in the pdbg",
                         childTgtDevTreePath)
                 .c_str());
@@ -812,7 +812,7 @@ std::optional<sdbusplus::message::object_path>
      * because the oscrefclk parent fru is not modelled in the phal
      * cec device tree.
      */
-    if (std::strcmp(pdbgTgtClass, "oscrefclk") == 0)
+    if (strcmp(pdbgTgtClass, "oscrefclk") == 0)
     {
         return getClkParentFruObjPath(childTgt);
     }
@@ -832,7 +832,7 @@ std::optional<sdbusplus::message::object_path>
     if (!parentFruHwDetails.has_value())
     {
         log<level::ERR>(
-            fmt::format("Isolated hardware [{}] parent fru pdbg class [{}] is "
+            std::format("Isolated hardware [{}] parent fru pdbg class [{}] is "
                         "not found in the isolatable hardware list",
                         childTgtDevTreePath, parentFruTgtPdbgClass)
                 .c_str());
@@ -846,7 +846,7 @@ std::optional<sdbusplus::message::object_path>
     if (!parentFruPath.has_value())
     {
         log<level::ERR>(
-            fmt::format("Failed to get get parent fru inventory path "
+            std::format("Failed to get get parent fru inventory path "
                         "for given device path [{}]",
                         childTgtDevTreePath)
                 .c_str());
@@ -872,7 +872,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
         if (pdbgTgtClass == nullptr)
         {
             log<level::ERR>(
-                fmt::format("The given hardware [{}] pdbg target class "
+                std::format("The given hardware [{}] pdbg target class "
                             "is missing, please make sure hardware unit "
                             "is added in pdbg ",
                             isolatedHwTgtDevTreePath)
@@ -940,7 +940,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
         if (!isolatedHwDetails.has_value())
         {
             log<level::ERR>(
-                fmt::format("Isolated hardware [{}] pdbg class [{}] is "
+                std::format("Isolated hardware [{}] pdbg class [{}] is "
                             "not found in isolatable hardware list",
                             isolatedHwTgtDevTreePath, isolatedHwPdbgClass)
                     .c_str());
@@ -956,7 +956,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                 isolatedHwInfo, isolatedHwDetails->second._invPathFuncLookUp);
             if (!inventoryPath.has_value())
             {
-                log<level::ERR>(fmt::format("Failed to get inventory path for "
+                log<level::ERR>(std::format("Failed to get inventory path for "
                                             "given device path [{}]",
                                             isolatedHwTgtDevTreePath)
                                     .c_str());
@@ -1009,7 +1009,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                     if (parentFc == nullptr)
                     {
                         log<level::ERR>(
-                            fmt::format("Failed to get the parent FC "
+                            std::format("Failed to get the parent FC "
                                         "target for the given device tree "
                                         "target path [{}]",
                                         isolatedHwTgtDevTreePath)
@@ -1036,7 +1036,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
 
             if (isolateHwPath == childsInventoryPath->end())
             {
-                log<level::ERR>(fmt::format("Failed to get inventory path for "
+                log<level::ERR>(std::format("Failed to get inventory path for "
                                             "given device path [{}]",
                                             isolatedHwTgtDevTreePath)
                                     .c_str());
@@ -1049,7 +1049,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}]", e.what()).c_str());
+        log<level::ERR>(std::format("Exception [{}]", e.what()).c_str());
         return std::nullopt;
     }
 }
@@ -1097,7 +1097,7 @@ IsItIsoHwInvPath itemPrettyName(sdbusplus::bus::bus& bus,
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
-        log<level::WARNING>(fmt::format("Exception [{}] to get PrettyName for "
+        log<level::WARNING>(std::format("Exception [{}] to get PrettyName for "
                                         "the given object path [{}]",
                                         e.what(), objPath.str)
                                 .c_str());
@@ -1133,7 +1133,7 @@ IsItIsoHwInvPath
     }
     catch (const sdbusplus::exception::exception& e)
     {
-        log<level::WARNING>(fmt::format("Exception [{}] to get LocationCode "
+        log<level::WARNING>(std::format("Exception [{}] to get LocationCode "
                                         "for the given object path [{}]",
                                         e.what(), objPath.str)
                                 .c_str());

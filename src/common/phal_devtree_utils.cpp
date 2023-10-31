@@ -11,11 +11,11 @@ extern "C"
 
 #include "common/phal_devtree_utils.hpp"
 
-#include <fmt/format.h>
 #include <stdlib.h>
 
 #include <phosphor-logging/elog-errors.hpp>
 
+#include <format>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -42,7 +42,7 @@ struct CecDevTreeHw
 
     CecDevTreeHw()
     {
-        std::memset(&physBinPath, 0, sizeof(physBinPath));
+        memset(&physBinPath, 0, sizeof(physBinPath));
         reqDevTreeHw = nullptr;
     }
 };
@@ -53,7 +53,7 @@ void initPHAL()
     if (setenv("PDBG_DTB", PHAL_DEVTREE, 1))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Failed to set PDBG_DTB with ErrNo [{}] and ErrMsg [{}]", errno,
                 strerror(errno))
                 .c_str());
@@ -80,7 +80,7 @@ std::optional<LocationCode> getUnexpandedLocCode(const std::string& locCode)
     // Location code should start with "U"
     if (locCode[0] != 'U')
     {
-        log<level::ERR>(fmt::format("Location code should start with \"U\""
+        log<level::ERR>(std::format("Location code should start with \"U\""
                                     " but, given location code [{}]",
                                     locCode)
                             .c_str());
@@ -92,7 +92,7 @@ std::optional<LocationCode> getUnexpandedLocCode(const std::string& locCode)
     constexpr uint8_t EXP_LOCATIN_CODE_MIN_LENGTH = 17;
     if (locCode.length() < EXP_LOCATIN_CODE_MIN_LENGTH)
     {
-        log<level::ERR>(fmt::format("Given location code [{}] is not meet "
+        log<level::ERR>(std::format("Given location code [{}] is not meet "
                                     "with minimum length [{}]",
                                     locCode, EXP_LOCATIN_CODE_MIN_LENGTH)
                             .c_str());
@@ -107,7 +107,7 @@ std::optional<LocationCode> getUnexpandedLocCode(const std::string& locCode)
     auto endPosOfFcs = locCode.find('-', EXP_LOCATIN_CODE_MIN_LENGTH);
     if (endPosOfFcs == std::string::npos)
     {
-        log<level::ERR>(fmt::format("Given location code [{}] is not "
+        log<level::ERR>(std::format("Given location code [{}] is not "
                                     "valid i.e could not find dash",
                                     locCode)
                             .c_str());
@@ -165,7 +165,7 @@ int pdbgCallbackToGetTgt(struct pdbg_target* target, void* userData)
         return continueTgtTraversal;
     }
 
-    if (std::memcmp(physBinPath, cecDevTreeHw->physBinPath,
+    if (memcmp(physBinPath, cecDevTreeHw->physBinPath,
                     sizeof(physBinPath)) != 0)
     {
         return continueTgtTraversal;
@@ -185,7 +185,7 @@ std::optional<struct pdbg_target*>
     size_t physBinPathSize = sizeof(cecDevTreeHw.physBinPath);
     if (physBinPathSize < physicalPath.size())
     {
-        log<level::ERR>(fmt::format("EntityPath size is mismatch. "
+        log<level::ERR>(std::format("EntityPath size is mismatch. "
                                     " Given size [{}] and Expected size [{}]",
                                     physicalPath.size(), physBinPathSize)
                             .c_str());
@@ -205,7 +205,7 @@ std::optional<struct pdbg_target*>
                              << (int)ele << " ";
                       });
 
-        log<level::ERR>(fmt::format("Isolated HW [{}] is "
+        log<level::ERR>(std::format("Isolated HW [{}] is "
                                     "not found in the cec device tree",
                                     ss.str())
                             .c_str());
@@ -342,7 +342,7 @@ bool isECOcore(struct pdbg_target* coreTgt)
     if (DT_GET_PROP(ATTR_ECO_MODE, coreTgt, ecoMode))
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Failed to get ATTR_ECO_MODE from the given core target [{}]",
                 pdbg_target_path(coreTgt))
                 .c_str());
