@@ -165,8 +165,8 @@ int pdbgCallbackToGetTgt(struct pdbg_target* target, void* userData)
         return continueTgtTraversal;
     }
 
-    if (memcmp(physBinPath, cecDevTreeHw->physBinPath,
-                    sizeof(physBinPath)) != 0)
+    if (memcmp(physBinPath, cecDevTreeHw->physBinPath, sizeof(physBinPath)) !=
+        0)
     {
         return continueTgtTraversal;
     }
@@ -201,9 +201,9 @@ std::optional<struct pdbg_target*>
         std::stringstream ss;
         std::for_each(physicalPath.begin(), physicalPath.end(),
                       [&ss](const auto& ele) {
-                          ss << std::setw(2) << std::setfill('0') << std::hex
-                             << (int)ele << " ";
-                      });
+            ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele
+               << " ";
+        });
 
         log<level::ERR>(std::format("Isolated HW [{}] is "
                                     "not found in the cec device tree",

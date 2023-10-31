@@ -116,8 +116,8 @@ int Watch::sdEventHandler(sd_event_source*, int fd, uint32_t eventsOfFd,
     while (offset < bytes)
     {
         auto receivedEvent = reinterpret_cast<inotify_event*>(&buffer[offset]);
-        auto callWatcherHandler =
-            receivedEvent->mask & watchPtr->_eventMasksToWatch;
+        auto callWatcherHandler = receivedEvent->mask &
+                                  watchPtr->_eventMasksToWatch;
 
         if (callWatcherHandler)
         {

@@ -56,7 +56,6 @@ T getDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
                      const std::string& propInterface,
                      const std::string& propName)
 {
-
     T propertyVal;
     try
     {
@@ -113,7 +112,6 @@ void setDBusPropertyVal(sdbusplus::bus::bus& bus, const std::string& objPath,
                         const std::string& propInterface,
                         const std::string& propName, const T& propVal)
 {
-
     try
     {
         auto dbusServiceName = getDBusServiceName(bus, objPath, propInterface);

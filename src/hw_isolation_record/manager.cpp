@@ -157,8 +157,8 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
 {
     try
     {
-        auto entryObjPath =
-            fs::path(HW_ISOLATION_ENTRY_OBJPATH) / std::to_string(recordId);
+        auto entryObjPath = fs::path(HW_ISOLATION_ENTRY_OBJPATH) /
+                            std::to_string(recordId);
 
         // Add association for isolated hardware inventory path
         // Note: Association forward and reverse type are defined as per
@@ -208,12 +208,12 @@ std::pair<bool, sdbusplus::message::object_path> Manager::updateEntry(
     const std::string& isolatedHwDbusObjPath, const std::string& bmcErrorLog,
     const openpower_guard::EntityPath& entityPath)
 {
-    auto isolatedHwIt = std::find_if(
-        _isolatedHardwares.begin(), _isolatedHardwares.end(),
-        [recordId, entityPath](const auto& isolatedHw) {
-            return ((isolatedHw.second->getEntityPath() == entityPath) &&
-                    (isolatedHw.second->getEntryRecId() == recordId));
-        });
+    auto isolatedHwIt =
+        std::find_if(_isolatedHardwares.begin(), _isolatedHardwares.end(),
+                     [recordId, entityPath](const auto& isolatedHw) {
+        return ((isolatedHw.second->getEntityPath() == entityPath) &&
+                (isolatedHw.second->getEntryRecId() == recordId));
+    });
 
     if (isolatedHwIt == _isolatedHardwares.end())
     {
@@ -340,9 +340,9 @@ sdbusplus::message::object_path Manager::create(
     }
     else
     {
-        auto entryPath =
-            createEntry(guardRecord->recordId, false, severity,
-                        isolateHardware.str, "", true, guardRecord->targetId);
+        auto entryPath = createEntry(guardRecord->recordId, false, severity,
+                                     isolateHardware.str, "", true,
+                                     guardRecord->targetId);
 
         if (!entryPath.has_value())
         {
@@ -393,9 +393,9 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
                                     devTreePhysicalPath->size()),
         *eId, *guardType);
 
-    if (auto ret =
-            updateEntry(guardRecord->recordId, severity, isolateHardware.str,
-                        bmcErrorLog.str, guardRecord->targetId);
+    if (auto ret = updateEntry(guardRecord->recordId, severity,
+                               isolateHardware.str, bmcErrorLog.str,
+                               guardRecord->targetId);
         ret.first == true)
     {
         return ret.second;
@@ -474,9 +474,8 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
     std::stringstream ss;
     std::for_each(entityPathRawData.begin(), entityPathRawData.end(),
                   [&ss](const auto& ele) {
-                      ss << std::setw(2) << std::setfill('0') << std::hex
-                         << (int)ele << " ";
-                  });
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
+    });
 
     try
     {
@@ -538,10 +537,10 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
             return;
         }
 
-        auto entryPath =
-            createEntry(record.recordId, resolved, *entrySeverity,
-                        isolatedHwInventoryPath->str, strBmcErrorLogPath, false,
-                        record.targetId);
+        auto entryPath = createEntry(record.recordId, resolved, *entrySeverity,
+                                     isolatedHwInventoryPath->str,
+                                     strBmcErrorLogPath, false,
+                                     record.targetId);
 
         if (!entryPath.has_value())
         {
@@ -572,9 +571,8 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
     std::stringstream ss;
     std::for_each(entityPathRawData.begin(), entityPathRawData.end(),
                   [&ss](const auto& ele) {
-                      ss << std::setw(2) << std::setfill('0') << std::hex
-                         << (int)ele << " ";
-                  });
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
+    });
 
     bool ecoCore{false};
 
@@ -681,10 +679,10 @@ void Manager::cleanupPersistedEcoCores()
 
             auto isNotIsolated = std::ranges::none_of(
                 _isolatedHardwares, [ecoCore](const auto& entry) {
-                    return (entry.second->getEntityPath() ==
-                            openpower_guard::EntityPath(ecoCore->data(),
-                                                        ecoCore->size()));
-                });
+                return (entry.second->getEntityPath() ==
+                        openpower_guard::EntityPath(ecoCore->data(),
+                                                    ecoCore->size()));
+            });
 
             if (isNotIsolated)
             {
@@ -753,22 +751,23 @@ void Manager::processHardwareIsolationRecordFile()
      */
     try
     {
-        // The handleHostIsolatedHardwares method is called after 5 seconds to handle atomicity 
-        // in the guard file operations. Within this time window, if there are multiple updates 
-        // to the guard file, process all of them together. We need not add another timer object 
-        // to process the new information, as the earlier information is not yet processed
-        // and could be done together. In every iteration we process and update all the guard records. 
-        // This will optimize the time consumed when there are multiple guard records created.
-        if(_timerObjs.empty())
+        // The handleHostIsolatedHardwares method is called after 5 seconds to
+        // handle atomicity in the guard file operations. Within this time
+        // window, if there are multiple updates to the guard file, process all
+        // of them together. We need not add another timer object to process the
+        // new information, as the earlier information is not yet processed and
+        // could be done together. In every iteration we process and update all
+        // the guard records. This will optimize the time consumed when there
+        // are multiple guard records created.
+        if (_timerObjs.empty())
         {
-            _timerObjs.emplace(
-                std::make_unique<
-                    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                    _eventLoop,
-                    std::bind(std::mem_fn(&hw_isolation::record::Manager::
-                                              handleHostIsolatedHardwares),
-                              this),
-                    std::chrono::seconds(5)));
+            _timerObjs.emplace(std::make_unique<sdeventplus::utility::Timer<
+                                   sdeventplus::ClockId::Monotonic>>(
+                _eventLoop,
+                std::bind(std::mem_fn(&hw_isolation::record::Manager::
+                                          handleHostIsolatedHardwares),
+                          this),
+                std::chrono::seconds(5)));
         }
     }
     catch (const std::exception& e)
@@ -824,8 +823,8 @@ void Manager::handleHostIsolatedHardwares()
         }
         else
         {
-            auto validEntryRecords =
-                entryRecords | std::views::filter(validRecord);
+            auto validEntryRecords = entryRecords |
+                                     std::views::filter(validRecord);
 
             if (validEntryRecords.empty())
             {
@@ -845,9 +844,9 @@ void Manager::handleHostIsolatedHardwares()
                 std::stringstream ss;
                 std::for_each(entityPathRawData.begin(),
                               entityPathRawData.end(), [&ss](const auto& ele) {
-                                  ss << std::setw(2) << std::setfill('0')
-                                     << std::hex << (int)ele << " ";
-                              });
+                    ss << std::setw(2) << std::setfill('0') << std::hex
+                       << (int)ele << " ";
+                });
                 log<level::ERR>(std::format("More than one valid records exist "
                                             "for the same hardware [{}]",
                                             ss.str())
@@ -885,8 +884,8 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
 
     bool ecoCore{false};
 
-    auto isolateHwInventoryPath =
-        _isolatableHWs.getInventoryPath(entityPath, ecoCore);
+    auto isolateHwInventoryPath = _isolatableHWs.getInventoryPath(entityPath,
+                                                                  ecoCore);
 
     std::stringstream ss;
     std::for_each(entityPath.begin(), entityPath.end(), [&ss](const auto& ele) {
@@ -951,19 +950,19 @@ std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
 {
     // Make sure whether the given hardware inventory is exists
     // in the record list.
-    auto entryIt = std::find_if(
-        _isolatedHardwares.begin(), _isolatedHardwares.end(),
-        [hwInventoryPath](const auto& ele) {
-            for (const auto& assocEle : ele.second->associations())
+    auto entryIt = std::find_if(_isolatedHardwares.begin(),
+                                _isolatedHardwares.end(),
+                                [hwInventoryPath](const auto& ele) {
+        for (const auto& assocEle : ele.second->associations())
+        {
+            if (std::get<0>(assocEle) == "isolated_hw")
             {
-                if (std::get<0>(assocEle) == "isolated_hw")
-                {
-                    return std::get<2>(assocEle) == hwInventoryPath.str;
-                }
+                return std::get<2>(assocEle) == hwInventoryPath.str;
             }
+        }
 
-            return false;
-        });
+        return false;
+    });
 
     if (entryIt == _isolatedHardwares.end())
     {

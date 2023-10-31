@@ -34,8 +34,7 @@ struct GuardedTarget
 {
     pdbg_target* target = nullptr;
     std::string phyDevPath;
-    GuardedTarget(const std::string& path) : phyDevPath(path)
-    {}
+    GuardedTarget(const std::string& path) : phyDevPath(path) {}
 };
 
 /**

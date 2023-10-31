@@ -221,11 +221,10 @@ std::optional<
     IsolatableHWs::getIsolatableHWDetailsByPrettyName(
         const std::string& prettyName) const
 {
-    auto it =
-        std::find_if(_isolatableHWsList.begin(), _isolatableHWsList.end(),
-                     [&prettyName](const auto& isolatableHw) {
-                         return isolatableHw.second._prettyName == prettyName;
-                     });
+    auto it = std::find_if(_isolatableHWsList.begin(), _isolatableHWsList.end(),
+                           [&prettyName](const auto& isolatableHw) {
+        return isolatableHw.second._prettyName == prettyName;
+    });
 
     if (it != _isolatableHWsList.end())
     {
@@ -243,9 +242,9 @@ std::optional<
 
     try
     {
-        auto method =
-            _bus.new_method_call(type::ObjectMapperName, type::ObjectMapperPath,
-                                 type::ObjectMapperName, "GetObject");
+        auto method = _bus.new_method_call(type::ObjectMapperName,
+                                           type::ObjectMapperPath,
+                                           type::ObjectMapperName, "GetObject");
 
         method.append(dbusObjPath.str);
         method.append(std::vector<std::string>({}));
@@ -272,20 +271,19 @@ std::optional<
     std::vector<std::pair<std::string, std::string>> inventoryItemIfaces;
     std::for_each(objServs.begin(), objServs.end(),
                   [&inventoryItemIfaces](const auto& service) {
-                      auto inventoryItemIfaceIt = std::find_if(
-                          service.second.begin(), service.second.end(),
-                          [](const auto& interface) {
-                              return ((interface.find("Inventory.Item") !=
-                                       std::string::npos) &&
-                                      (!interface.ends_with("Item")));
-                          });
+        auto inventoryItemIfaceIt = std::find_if(service.second.begin(),
+                                                 service.second.end(),
+                                                 [](const auto& interface) {
+            return ((interface.find("Inventory.Item") != std::string::npos) &&
+                    (!interface.ends_with("Item")));
+        });
 
-                      if (inventoryItemIfaceIt != service.second.end())
-                      {
-                          inventoryItemIfaces.emplace_back(std::make_pair(
-                              service.first, *inventoryItemIfaceIt));
-                      }
-                  });
+        if (inventoryItemIfaceIt != service.second.end())
+        {
+            inventoryItemIfaces.emplace_back(
+                std::make_pair(service.first, *inventoryItemIfaceIt));
+        }
+    });
 
     if (inventoryItemIfaces.empty())
     {
@@ -306,9 +304,9 @@ std::optional<
         std::stringstream objData;
         std::for_each(inventoryItemIfaces.begin(), inventoryItemIfaces.end(),
                       [&objData](const auto& ele) {
-                          objData << "Service: " << ele.first
-                                  << " Iface: " << ele.second << " | ";
-                      });
+            objData << "Service: " << ele.first << " Iface: " << ele.second
+                    << " | ";
+        });
 
         log<level::ERR>(
             std::format("Either the same interface is hosted "
@@ -727,8 +725,8 @@ std::optional<sdbusplus::message::object_path>
         auto fruHwInvPath = std::find_if(
             inventoryPathList->begin(), inventoryPathList->end(),
             [&fruInstId, &fruInvPathLookupFunc, this](const auto& path) {
-                return fruInvPathLookupFunc(this->_bus, path, fruInstId);
-            });
+            return fruInvPathLookupFunc(this->_bus, path, fruInstId);
+        });
 
         if (fruHwInvPath == inventoryPathList->end())
         {
@@ -1030,9 +1028,9 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                 childsInventoryPath->begin(), childsInventoryPath->end(),
                 [&uniqIsolateHwKey, &isolatedHwDetails,
                  this](const auto& path) {
-                    return isolatedHwDetails->second._invPathFuncLookUp(
-                        this->_bus, path, uniqIsolateHwKey);
-                });
+                return isolatedHwDetails->second._invPathFuncLookUp(
+                    this->_bus, path, uniqIsolateHwKey);
+            });
 
             if (isolateHwPath == childsInventoryPath->end())
             {

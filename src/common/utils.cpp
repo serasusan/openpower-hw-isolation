@@ -32,9 +32,9 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
 
     try
     {
-        auto method =
-            bus.new_method_call(type::ObjectMapperName, type::ObjectMapperPath,
-                                type::ObjectMapperName, "GetObject");
+        auto method = bus.new_method_call(type::ObjectMapperName,
+                                          type::ObjectMapperPath,
+                                          type::ObjectMapperName, "GetObject");
 
         method.append(path);
         method.append(std::vector<std::string>({interface}));
@@ -81,8 +81,8 @@ std::string getDBusServiceName(sdbusplus::bus::bus& bus,
 
         std::for_each(servicesName.begin(), servicesName.end(),
                       [&serviceNameList](const auto& serviceName) {
-                          serviceNameList.append(serviceName.first + ",");
-                      });
+            serviceNameList.append(serviceName.first + ",");
+        });
 
         log<level::ERR>(
             std::format(
@@ -344,9 +344,9 @@ std::optional<std::vector<sdbusplus::message::object_path>>
 
         std::for_each(recvPaths.begin(), recvPaths.end(),
                       [&listOfChildsInventoryPath](const auto& ele) {
-                          listOfChildsInventoryPath.push_back(
-                              sdbusplus::message::object_path(ele));
-                      });
+            listOfChildsInventoryPath.push_back(
+                sdbusplus::message::object_path(ele));
+        });
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {

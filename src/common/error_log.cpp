@@ -167,9 +167,9 @@ std::optional<std::string>
     const char* data{nullptr};
     size_t length{0};
 
-    if (auto rc =
-            sd_journal_get_data(journal, fieldName.c_str(),
-                                reinterpret_cast<const void**>(&data), &length);
+    if (auto rc = sd_journal_get_data(journal, fieldName.c_str(),
+                                      reinterpret_cast<const void**>(&data),
+                                      &length);
         rc == 0)
     {
         // Get field value, constructing by the returned length so we can use
@@ -236,8 +236,8 @@ std::optional<std::vector<std::string>>
             }
             else
             {
-                if (retValue =
-                        sdjGetTraceFieldValue(journal, "SYSLOG_IDENTIFIER");
+                if (retValue = sdjGetTraceFieldValue(journal,
+                                                     "SYSLOG_IDENTIFIER");
                     retValue.has_value())
                 {
                     sysLogId = *retValue;
@@ -367,10 +367,9 @@ void FFDCFiles::transformFFDCFiles(FFDCFilesInfo& ffdcFilesInfo)
 {
     std::transform(_ffdcFiles.begin(), _ffdcFiles.end(),
                    std::back_inserter(ffdcFilesInfo), [](const auto& ffdcFile) {
-                       return std::make_tuple(
-                           ffdcFile->getFormat(), ffdcFile->getSubType(),
-                           ffdcFile->getVersion(), ffdcFile->getFD());
-                   });
+        return std::make_tuple(ffdcFile->getFormat(), ffdcFile->getSubType(),
+                               ffdcFile->getVersion(), ffdcFile->getFD());
+    });
 }
 
 void createErrorLog(const std::string& errMsg, const Level& errSeverity,

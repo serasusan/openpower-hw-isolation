@@ -389,8 +389,8 @@ int main(int argc, char** argv)
                             "xyz.openbmc_project.State.Boot."
                             "Progress"),
                         [&bus, &unresolvedRecords, &timer](auto& msg) {
-                            propertyChanged(bus, msg, timer);
-                        });
+                    propertyChanged(bus, msg, timer);
+                });
 
                 bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
                 return event.loop();
