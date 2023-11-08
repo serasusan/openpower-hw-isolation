@@ -15,7 +15,6 @@ project('hardware_isolation', 'cpp', 'c',
 
 cpp = meson.get_compiler('cpp')
 
-format = dependency('fmt')
 libdtapi = dependency('libdt-api')
 libguard = cpp.find_library('libguard')
 libpdbg = meson.get_compiler('c').find_library('libpdbg')
@@ -80,7 +79,6 @@ hardware_isolation_sources = [
     ]
 
 hardware_isolation_dependencies = [
-        format,
         libdtapi,
         libguard,
         libpdbg,
@@ -113,5 +111,5 @@ configure_file(
     install_dir: systemd_system_unit_dir,
     output: '@PLAINNAME@'
     )
-    
-subdir('src')    
+
+subdir('src')

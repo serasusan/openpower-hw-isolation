@@ -38,8 +38,7 @@ class FD
      *
      *  @param[in] fd - File descriptor
      */
-    FD(int fd) : fd(fd)
-    {}
+    FD(int fd) : fd(fd) {}
 
     ~FD()
     {

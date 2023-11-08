@@ -4,9 +4,9 @@
 
 #include "common/error_log.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
+
+#include <format>
 
 namespace hw_isolation
 {
@@ -72,7 +72,7 @@ std::pair<event::EventMsg, event::EventSeverity>
 
         default:
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Unsupported deconfigured reason is given [{}]",
                     static_cast<std::underlying_type_t<DeconfiguredByReason>>(
                         reason))

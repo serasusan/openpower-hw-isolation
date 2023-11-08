@@ -81,5 +81,7 @@ GET https://${bmc}/redfish/v1/Systems/system/LogServices/HardwareIsolation/Entri
   "Severity": "Critical"                                                                        <-- The isolated hardware severity
 }
 ```
-**FYI:** In the OpenPOWER based IBM system, if the `AdditionalDataURI` property is not present and `Severity` is __Warning__ then,
-the resource is isolated manually by the user.
+
+**FYI:** In the OpenPOWER based IBM system, if the `AdditionalDataURI` property
+is not present and `Severity` is **Warning** then, the resource is isolated
+manually by the user.

@@ -4,12 +4,12 @@
 
 #include "common/common_types.hpp"
 
-#include <fmt/format.h>
-
 #include <libguard/guard_exception.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <xyz/openbmc_project/Common/File/error.hpp>
 #include <xyz/openbmc_project/HardwareIsolation/error.hpp>
+
+#include <format>
 
 namespace hw_isolation
 {

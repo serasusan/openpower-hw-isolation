@@ -2,9 +2,9 @@
 
 #include "common/common_types.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
+
+#include <format>
 
 namespace hw_isolation
 {
@@ -27,7 +27,7 @@ Watch::Watch(const sd_event* eventObj, const int inotifyFlagsToWatch,
 {
     if (!std::filesystem::exists(_fileToWatch))
     {
-        log<level::ERR>(fmt::format("Given path [{}] doesn't exist to watch",
+        log<level::ERR>(std::format("Given path [{}] doesn't exist to watch",
                                     _fileToWatch.string())
                             .c_str());
         throw type::CommonError::InvalidArgument();
@@ -38,7 +38,7 @@ Watch::Watch(const sd_event* eventObj, const int inotifyFlagsToWatch,
     if (_watchDescriptor == -1)
     {
         log<level::ERR>(
-            fmt::format("inotify_add_watch call failed with ErrNo[{}] "
+            std::format("inotify_add_watch call failed with ErrNo[{}] "
                         "ErrMsg[{}]",
                         errno, strerror(errno))
                 .c_str());
@@ -52,7 +52,7 @@ Watch::Watch(const sd_event* eventObj, const int inotifyFlagsToWatch,
     {
         // Failed to add to event loop
         log<level::ERR>(
-            fmt::format("sd_event_add_io call failed with ErrNo[{}] "
+            std::format("sd_event_add_io call failed with ErrNo[{}] "
                         "ErrMsg[{}]",
                         errno, strerror(errno))
                 .c_str());
@@ -74,7 +74,7 @@ int Watch::inotifyInit()
 
     if (-1 == fd)
     {
-        log<level::ERR>(fmt::format("inotify_init1 call failed with ErrNo[{}] "
+        log<level::ERR>(std::format("inotify_init1 call failed with ErrNo[{}] "
                                     "ErrMsg[{}]",
                                     errno, strerror(errno))
                             .c_str());
@@ -103,7 +103,7 @@ int Watch::sdEventHandler(sd_event_source*, int fd, uint32_t eventsOfFd,
     {
         // Failed to read inotify event
         // Report error and return
-        log<level::ERR>(fmt::format("read call failed with ErrNo[{}] "
+        log<level::ERR>(std::format("read call failed with ErrNo[{}] "
                                     "ErrMsg[{}]",
                                     errno, strerror(errno))
                             .c_str());
@@ -116,8 +116,8 @@ int Watch::sdEventHandler(sd_event_source*, int fd, uint32_t eventsOfFd,
     while (offset < bytes)
     {
         auto receivedEvent = reinterpret_cast<inotify_event*>(&buffer[offset]);
-        auto callWatcherHandler =
-            receivedEvent->mask & watchPtr->_eventMasksToWatch;
+        auto callWatcherHandler = receivedEvent->mask &
+                                  watchPtr->_eventMasksToWatch;
 
         if (callWatcherHandler)
         {

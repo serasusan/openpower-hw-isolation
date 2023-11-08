@@ -6,10 +6,10 @@
 #include "hw_isolation_event/hw_status_manager.hpp"
 #include "hw_isolation_record/manager.hpp"
 
-#include <fmt/format.h>
-
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdeventplus/event.hpp>
+
+#include <format>
 
 int main()
 {
@@ -54,7 +54,7 @@ int main()
     catch (std::exception& e)
     {
         using namespace phosphor::logging;
-        log<level::ERR>(fmt::format("Exception [{}]", e.what()).c_str());
+        log<level::ERR>(std::format("Exception [{}]", e.what()).c_str());
     }
 
     return eventLoopRet;
