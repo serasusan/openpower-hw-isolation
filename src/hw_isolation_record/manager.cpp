@@ -7,13 +7,12 @@
 #include "common/common_types.hpp"
 #include "common/utils.hpp"
 
-#include <fmt/format.h>
-
 #include <cereal/archives/binary.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <xyz/openbmc_project/State/Chassis/server.hpp>
 
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iomanip>
 #include <ranges>
@@ -55,7 +54,7 @@ Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
 void Manager::serialize()
 {
     fs::path path{
-        fmt::format(HW_ISOLATION_ENTRY_MGR_PERSIST_PATH, "eco_cores")};
+        std::format(HW_ISOLATION_ENTRY_MGR_PERSIST_PATH, "eco_cores")};
 
     if (_persistedEcoCores.empty())
     {
@@ -72,7 +71,7 @@ void Manager::serialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during serialize the "
+        log<level::ERR>(std::format("Exception: [{}] during serialize the "
                                     "eco cores physical path into {}",
                                     e.what(), path.string())
                             .c_str());
@@ -83,7 +82,7 @@ void Manager::serialize()
 bool Manager::deserialize()
 {
     fs::path path{
-        fmt::format(HW_ISOLATION_ENTRY_MGR_PERSIST_PATH, "eco_cores")};
+        std::format(HW_ISOLATION_ENTRY_MGR_PERSIST_PATH, "eco_cores")};
     try
     {
         if (fs::exists(path))
@@ -97,7 +96,7 @@ bool Manager::deserialize()
     }
     catch (const cereal::Exception& e)
     {
-        log<level::ERR>(fmt::format("Exception: [{}] during deserialize the "
+        log<level::ERR>(std::format("Exception: [{}] during deserialize the "
                                     "eco cores physical path into {}",
                                     e.what(), path.string())
                             .c_str());
@@ -142,7 +141,7 @@ std::optional<uint32_t>
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
-        log<level::ERR>(fmt::format("Exception [{}] to get EID (aka PEL ID) "
+        log<level::ERR>(std::format("Exception [{}] to get EID (aka PEL ID) "
                                     "for object [{}]",
                                     e.what(), bmcErrorLog.str)
                             .c_str());
@@ -158,8 +157,8 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
 {
     try
     {
-        auto entryObjPath =
-            fs::path(HW_ISOLATION_ENTRY_OBJPATH) / std::to_string(recordId);
+        auto entryObjPath = fs::path(HW_ISOLATION_ENTRY_OBJPATH) /
+                            std::to_string(recordId);
 
         // Add association for isolated hardware inventory path
         // Note: Association forward and reverse type are defined as per
@@ -193,7 +192,7 @@ std::optional<sdbusplus::message::object_path> Manager::createEntry(
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}], so failed to create entry", e.what())
+            std::format("Exception [{}], so failed to create entry", e.what())
                 .c_str());
 
         if (deleteRecord)
@@ -209,12 +208,12 @@ std::pair<bool, sdbusplus::message::object_path> Manager::updateEntry(
     const std::string& isolatedHwDbusObjPath, const std::string& bmcErrorLog,
     const openpower_guard::EntityPath& entityPath)
 {
-    auto isolatedHwIt = std::find_if(
-        _isolatedHardwares.begin(), _isolatedHardwares.end(),
-        [recordId, entityPath](const auto& isolatedHw) {
-            return ((isolatedHw.second->getEntityPath() == entityPath) &&
-                    (isolatedHw.second->getEntryRecId() == recordId));
-        });
+    auto isolatedHwIt =
+        std::find_if(_isolatedHardwares.begin(), _isolatedHardwares.end(),
+                     [recordId, entityPath](const auto& isolatedHw) {
+        return ((isolatedHw.second->getEntityPath() == entityPath) &&
+                (isolatedHw.second->getEntryRecId() == recordId));
+    });
 
     if (isolatedHwIt == _isolatedHardwares.end())
     {
@@ -277,7 +276,7 @@ void Manager::isHwIsolationAllowed(const entry::EntrySeverity& severity)
     if (!utils::isHwIosolationSettingEnabled(_bus))
     {
         log<level::INFO>(
-            fmt::format("Hardware isolation is not allowed "
+            std::format("Hardware isolation is not allowed "
                         "since the HardwareIsolation setting is disabled")
                 .c_str());
         throw type::CommonError::Unavailable();
@@ -294,7 +293,7 @@ void Manager::isHwIsolationAllowed(const entry::EntrySeverity& severity)
         if (Chassis::convertPowerStateFromString(systemPowerState) !=
             Chassis::PowerState::Off)
         {
-            log<level::ERR>(fmt::format("Manual hardware isolation is allowed "
+            log<level::ERR>(std::format("Manual hardware isolation is allowed "
                                         "only when chassis powerstate is off")
                                 .c_str());
             throw type::CommonError::NotAllowed();
@@ -312,7 +311,7 @@ sdbusplus::message::object_path Manager::create(
     auto devTreePhysicalPath = _isolatableHWs.getPhysicalPath(isolateHardware);
     if (!devTreePhysicalPath.has_value())
     {
-        log<level::ERR>(fmt::format("Invalid argument [IsolateHardware: {}]",
+        log<level::ERR>(std::format("Invalid argument [IsolateHardware: {}]",
                                     isolateHardware.str)
                             .c_str());
         throw type::CommonError::InvalidArgument();
@@ -322,7 +321,7 @@ sdbusplus::message::object_path Manager::create(
     if (!guardType.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [Severity: {}]",
+            std::format("Invalid argument [Severity: {}]",
                         entry::EntryInterface::convertTypeToString(severity))
                 .c_str());
         throw type::CommonError::InvalidArgument();
@@ -341,9 +340,9 @@ sdbusplus::message::object_path Manager::create(
     }
     else
     {
-        auto entryPath =
-            createEntry(guardRecord->recordId, false, severity,
-                        isolateHardware.str, "", true, guardRecord->targetId);
+        auto entryPath = createEntry(guardRecord->recordId, false, severity,
+                                     isolateHardware.str, "", true,
+                                     guardRecord->targetId);
 
         if (!entryPath.has_value())
         {
@@ -364,7 +363,7 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
     auto devTreePhysicalPath = _isolatableHWs.getPhysicalPath(isolateHardware);
     if (!devTreePhysicalPath.has_value())
     {
-        log<level::ERR>(fmt::format("Invalid argument [IsolateHardware: {}]",
+        log<level::ERR>(std::format("Invalid argument [IsolateHardware: {}]",
                                     isolateHardware.str)
                             .c_str());
         throw type::CommonError::InvalidArgument();
@@ -374,7 +373,7 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
     if (!eId.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
+            std::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
                 .c_str());
         throw type::CommonError::InvalidArgument();
     }
@@ -383,7 +382,7 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
     if (!guardType.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [Severity: {}]",
+            std::format("Invalid argument [Severity: {}]",
                         entry::EntryInterface::convertTypeToString(severity))
                 .c_str());
         throw type::CommonError::InvalidArgument();
@@ -394,9 +393,9 @@ sdbusplus::message::object_path Manager::createWithErrorLog(
                                     devTreePhysicalPath->size()),
         *eId, *guardType);
 
-    if (auto ret =
-            updateEntry(guardRecord->recordId, severity, isolateHardware.str,
-                        bmcErrorLog.str, guardRecord->targetId);
+    if (auto ret = updateEntry(guardRecord->recordId, severity,
+                               isolateHardware.str, bmcErrorLog.str,
+                               guardRecord->targetId);
         ret.first == true)
     {
         return ret.second;
@@ -442,7 +441,7 @@ void Manager::resolveAllEntries(bool clearRecord)
         }
         catch (std::exception& e)
         {
-            log<level::ERR>(fmt::format("Exception [{}] to delete entry [{}]",
+            log<level::ERR>(std::format("Exception [{}] to delete entry [{}]",
                                         e.what(), entryRecordId)
                                 .c_str());
         }
@@ -475,9 +474,8 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
     std::stringstream ss;
     std::for_each(entityPathRawData.begin(), entityPathRawData.end(),
                   [&ss](const auto& ele) {
-                      ss << std::setw(2) << std::setfill('0') << std::hex
-                         << (int)ele << " ";
-                  });
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
+    });
 
     try
     {
@@ -496,7 +494,7 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
         if (!isolatedHwInventoryPath.has_value())
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Skipping to restore a given isolated "
                     "hardware [{}] : Due to failure to get inventory path",
                     ss.str())
@@ -512,7 +510,7 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
             if (!isRestorePath)
             {
                 log<level::ERR>(
-                    fmt::format("Skipping to restore a given isolated "
+                    std::format("Skipping to restore a given isolated "
                                 "hardware [{}] : Due to failure to get BMC "
                                 "error log path "
                                 "by isolated hardware EID (aka PEL ID) [{:#X}]",
@@ -531,7 +529,7 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
         if (!entrySeverity.has_value())
         {
             log<level::ERR>(
-                fmt::format("Skipping to restore a given isolated "
+                std::format("Skipping to restore a given isolated "
                             "hardware [{}] : Due to failure to to get BMC "
                             "EntrySeverity by isolated hardware GardType [{}]",
                             ss.str(), record.errType)
@@ -539,15 +537,15 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
             return;
         }
 
-        auto entryPath =
-            createEntry(record.recordId, resolved, *entrySeverity,
-                        isolatedHwInventoryPath->str, strBmcErrorLogPath, false,
-                        record.targetId);
+        auto entryPath = createEntry(record.recordId, resolved, *entrySeverity,
+                                     isolatedHwInventoryPath->str,
+                                     strBmcErrorLogPath, false,
+                                     record.targetId);
 
         if (!entryPath.has_value())
         {
             log<level::ERR>(
-                fmt::format(
+                std::format(
                     "Skipping to restore a given isolated "
                     "hardware [{}] : Due to failure to create dbus entry",
                     ss.str())
@@ -558,7 +556,7 @@ void Manager::createEntryForRecord(const openpower_guard::GuardRecord& record,
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}] : Skipping to restore a given isolated "
+            std::format("Exception [{}] : Skipping to restore a given isolated "
                         "hardware [{}]",
                         e.what(), ss.str())
                 .c_str());
@@ -573,9 +571,8 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
     std::stringstream ss;
     std::for_each(entityPathRawData.begin(), entityPathRawData.end(),
                   [&ss](const auto& ele) {
-                      ss << std::setw(2) << std::setfill('0') << std::hex
-                         << (int)ele << " ";
-                  });
+        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
+    });
 
     bool ecoCore{false};
 
@@ -585,7 +582,7 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
     if (!isolatedHwInventoryPath.has_value())
     {
         log<level::ERR>(
-            fmt::format("Skipping to restore a given isolated "
+            std::format("Skipping to restore a given isolated "
                         "hardware [{}] : Due to failure to get inventory path",
                         ss.str())
                 .c_str());
@@ -598,7 +595,7 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
     if (!bmcErrorLogPath.has_value())
     {
         log<level::ERR>(
-            fmt::format(
+            std::format(
                 "Skipping to restore a given isolated "
                 "hardware [{}] : Due to failure to get BMC error log path "
                 "by isolated hardware EID (aka PEL ID) [{}]",
@@ -612,7 +609,7 @@ void Manager::updateEntryForRecord(const openpower_guard::GuardRecord& record,
     if (!entrySeverity.has_value())
     {
         log<level::ERR>(
-            fmt::format("Skipping to restore a given isolated "
+            std::format("Skipping to restore a given isolated "
                         "hardware [{}] : Due to failure to to get BMC "
                         "EntrySeverity by isolated hardware GardType [{}]",
                         ss.str(), record.errType)
@@ -682,10 +679,10 @@ void Manager::cleanupPersistedEcoCores()
 
             auto isNotIsolated = std::ranges::none_of(
                 _isolatedHardwares, [ecoCore](const auto& entry) {
-                    return (entry.second->getEntityPath() ==
-                            openpower_guard::EntityPath(ecoCore->data(),
-                                                        ecoCore->size()));
-                });
+                return (entry.second->getEntityPath() ==
+                        openpower_guard::EntityPath(ecoCore->data(),
+                                                    ecoCore->size()));
+            });
 
             if (isNotIsolated)
             {
@@ -754,28 +751,29 @@ void Manager::processHardwareIsolationRecordFile()
      */
     try
     {
-        // The handleHostIsolatedHardwares method is called after 5 seconds to handle atomicity 
-        // in the guard file operations. Within this time window, if there are multiple updates 
-        // to the guard file, process all of them together. We need not add another timer object 
-        // to process the new information, as the earlier information is not yet processed
-        // and could be done together. In every iteration we process and update all the guard records. 
-        // This will optimize the time consumed when there are multiple guard records created.
-        if(_timerObjs.empty())
+        // The handleHostIsolatedHardwares method is called after 5 seconds to
+        // handle atomicity in the guard file operations. Within this time
+        // window, if there are multiple updates to the guard file, process all
+        // of them together. We need not add another timer object to process the
+        // new information, as the earlier information is not yet processed and
+        // could be done together. In every iteration we process and update all
+        // the guard records. This will optimize the time consumed when there
+        // are multiple guard records created.
+        if (_timerObjs.empty())
         {
-            _timerObjs.emplace(
-                std::make_unique<
-                    sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>>(
-                    _eventLoop,
-                    std::bind(std::mem_fn(&hw_isolation::record::Manager::
-                                              handleHostIsolatedHardwares),
-                              this),
-                    std::chrono::seconds(5)));
+            _timerObjs.emplace(std::make_unique<sdeventplus::utility::Timer<
+                                   sdeventplus::ClockId::Monotonic>>(
+                _eventLoop,
+                std::bind(std::mem_fn(&hw_isolation::record::Manager::
+                                          handleHostIsolatedHardwares),
+                          this),
+                std::chrono::seconds(5)));
         }
     }
     catch (const std::exception& e)
     {
         log<level::ERR>(
-            fmt::format("Exception [{}], Failed to process "
+            std::format("Exception [{}], Failed to process "
                         "hardware isolation record file that's updated",
                         e.what())
                 .c_str());
@@ -825,8 +823,8 @@ void Manager::handleHostIsolatedHardwares()
         }
         else
         {
-            auto validEntryRecords =
-                entryRecords | std::views::filter(validRecord);
+            auto validEntryRecords = entryRecords |
+                                     std::views::filter(validRecord);
 
             if (validEntryRecords.empty())
             {
@@ -846,10 +844,10 @@ void Manager::handleHostIsolatedHardwares()
                 std::stringstream ss;
                 std::for_each(entityPathRawData.begin(),
                               entityPathRawData.end(), [&ss](const auto& ele) {
-                                  ss << std::setw(2) << std::setfill('0')
-                                     << std::hex << (int)ele << " ";
-                              });
-                log<level::ERR>(fmt::format("More than one valid records exist "
+                    ss << std::setw(2) << std::setfill('0') << std::hex
+                       << (int)ele << " ";
+                });
+                log<level::ERR>(std::format("More than one valid records exist "
                                             "for the same hardware [{}]",
                                             ss.str())
                                     .c_str());
@@ -886,8 +884,8 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
 
     bool ecoCore{false};
 
-    auto isolateHwInventoryPath =
-        _isolatableHWs.getInventoryPath(entityPath, ecoCore);
+    auto isolateHwInventoryPath = _isolatableHWs.getInventoryPath(entityPath,
+                                                                  ecoCore);
 
     std::stringstream ss;
     std::for_each(entityPath.begin(), entityPath.end(), [&ss](const auto& ele) {
@@ -896,7 +894,7 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     if (!isolateHwInventoryPath.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [IsolateHardware: {}]", ss.str())
+            std::format("Invalid argument [IsolateHardware: {}]", ss.str())
                 .c_str());
         throw type::CommonError::InvalidArgument();
     }
@@ -906,7 +904,7 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     if (!eId.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
+            std::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
                 .c_str());
         throw type::CommonError::InvalidArgument();
     }
@@ -915,7 +913,7 @@ sdbusplus::message::object_path Manager::createWithEntityPath(
     if (!guardType.has_value())
     {
         log<level::ERR>(
-            fmt::format("Invalid argument [Severity: {}]",
+            std::format("Invalid argument [Severity: {}]",
                         entry::EntryInterface::convertTypeToString(severity))
                 .c_str());
         throw type::CommonError::InvalidArgument();
@@ -952,19 +950,19 @@ std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
 {
     // Make sure whether the given hardware inventory is exists
     // in the record list.
-    auto entryIt = std::find_if(
-        _isolatedHardwares.begin(), _isolatedHardwares.end(),
-        [hwInventoryPath](const auto& ele) {
-            for (const auto& assocEle : ele.second->associations())
+    auto entryIt = std::find_if(_isolatedHardwares.begin(),
+                                _isolatedHardwares.end(),
+                                [hwInventoryPath](const auto& ele) {
+        for (const auto& assocEle : ele.second->associations())
+        {
+            if (std::get<0>(assocEle) == "isolated_hw")
             {
-                if (std::get<0>(assocEle) == "isolated_hw")
-                {
-                    return std::get<2>(assocEle) == hwInventoryPath.str;
-                }
+                return std::get<2>(assocEle) == hwInventoryPath.str;
             }
+        }
 
-            return false;
-        });
+        return false;
+    });
 
     if (entryIt == _isolatedHardwares.end())
     {

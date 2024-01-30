@@ -23,8 +23,7 @@ struct GuardedTarget
 {
     pdbg_target* target = nullptr;
     std::string phyDevPath = {};
-    GuardedTarget(const std::string& path) : phyDevPath(path)
-    {}
+    GuardedTarget(const std::string& path) : phyDevPath(path) {}
 };
 
 using PropertyValue =
@@ -340,8 +339,8 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             }
             jsonResource["CURRENT_STATE"] = std::move(state);
 
-            jsonResource["REASON_DESCRIPTION"] =
-                getGuardReason(guardRecords, *physicalPath);
+            jsonResource["REASON_DESCRIPTION"] = getGuardReason(guardRecords,
+                                                                *physicalPath);
 
             jsonResource["GUARD_RECORD"] = true;
             ATTR_PHYS_DEV_PATH_Type phyPath;

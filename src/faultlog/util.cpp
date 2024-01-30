@@ -199,7 +199,6 @@ bool isECOcore(struct pdbg_target* target)
 
 std::string pdbgTargetName(struct pdbg_target* target)
 {
-
     if (isECOcore(target))
     {
         return "Cache-Only Core";
