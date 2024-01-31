@@ -211,7 +211,7 @@ void addServiceableEvents(const nlohmann::json& errorlog,
     if (!errorlog.empty())
     {
         nlohmann::json jsonServiceEvent;
-        jsonServiceEvent["SERVICEABLE_EVENT"] = std::move(errorlog);
+        jsonServiceEvent["SERVICEABLE_EVENT"] = errorlog;
         faultLogJson.emplace_back(jsonServiceEvent);
     }
 }
