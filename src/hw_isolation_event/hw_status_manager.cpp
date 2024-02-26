@@ -42,12 +42,23 @@ constexpr auto HW_STATUS_EVENTS_PATH = HW_ISOLATION_OBJPATH
 
 constexpr auto HOST_STATE_OBJ_PATH = "/xyz/openbmc_project/state/host0";
 
+/*The different deconfig types that are allowed
+"Fatal", event::EntrySeverity::Critical
+"Manual", event::EntrySeverity::Ok
+"Predictive", event::EntrySeverity::Warning
+"Unknown", event::EntrySeverity::Warning */
+
+// Define a vector containing Deconfiguration Type in the following
+// precedence
+std::vector<event::EventMsg> deconfigTypes = {"Fatal", "Predictive",
+                                              "By Association", "Manual"};
+
 Manager::Manager(sdbusplus::bus::bus& bus, const sdeventplus::Event& eventLoop,
                  record::Manager& hwIsolationRecordMgr) :
     _bus(bus),
     _eventLoop(eventLoop), _lastEventId(0), _isolatableHWs(bus),
     _hwIsolationRecordMgr(hwIsolationRecordMgr),
-    _requiredHwsPdbgClass({"dimm", "fc"})
+    _requiredHwsPdbgClass({"ocmb", "fc"})
 {
     fs::create_directories(
         fs::path(HW_ISOLATION_EVENT_PERSIST_PATH).parent_path());
@@ -172,7 +183,7 @@ std::pair<event::EventMsg, event::EventSeverity>
     }
 }
 
-bool Manager::PopulateDetailsToCreateEvent(
+bool Manager::populateDetailsToCreateEvent(
     pdbg_target* tgt, bool osRunning, event::EventMsg& eventMsg,
     event::EventSeverity& eventSeverity,
     record::entry::EntryErrLogPath& eventErrLogPath,
@@ -235,7 +246,6 @@ bool Manager::PopulateDetailsToCreateEvent(
                                           error_log::CollectTraces);
                 return false;
             }
-
             auto isolatedhwRecordInfo =
                 _hwIsolationRecordMgr.getIsolatedHwRecordInfo(*hwInventoryPath);
 
@@ -375,11 +385,6 @@ bool Manager::PopulateDetailsToCreateEvent(
             // We need to create an event, so return true
             return true;
         }
-        // Not present, so normal DDR4
-        else
-        {
-            return false;
-        }
     }
     catch (const std::exception& e)
     {
@@ -389,7 +394,6 @@ bool Manager::PopulateDetailsToCreateEvent(
                                     e.what())
                             .c_str());
     }
-
     return false;
 }
 
@@ -424,12 +428,96 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                         continue;
                     }
                 }
+                else if (ele == "ocmb")
+                {
+                    // Look for all the logical Dimms under it and
+                    // process them together
+                    struct pdbg_target* dimmTgt;
+                    struct pdbg_target* mpTgt;
+
+                    std::vector<event::EventMsg> eventMsgList;
+                    std::vector<event::EventSeverity> eventSeverityList;
+                    std::vector<record::entry::EntryErrLogPath>
+                        eventErrLogPathList;
+                    // hwInventoryPath - should be the same for both that
+                    // children under that ocmb.
+                    std::optional<sdbusplus::message::object_path>
+                        hwInventoryPath;
+
+                    // dimm0=functional, dimm2=functional : functional (normal
+                    // dualport) dimm0=functional, dimm2=deconfigured : ILLEGAL,
+                    // deconfigured dimm0=functional, dimm2=nonpresent :
+                    // functional (normal singleport) dimm0=deconfigured ,
+                    // dimm2=functional : ILLEGAL, deconfigured
+                    pdbg_for_each_target("mem_port", tgt, mpTgt)
+                    {
+                        pdbg_for_each_target("dimm", mpTgt, dimmTgt)
+                        {
+                            bool createEvent = false;
+                            event::EventMsg eventMsg;
+                            event::EventSeverity eventSeverity;
+                            record::entry::EntryErrLogPath eventErrLogPath;
+                            createEvent = populateDetailsToCreateEvent(
+                                dimmTgt, osRunning, eventMsg, eventSeverity,
+                                eventErrLogPath, hwInventoryPath);
+                            // If we need to create an event wait and capture
+                            // all the events for that physical dimm and then
+                            // prioritize
+                            if (createEvent)
+                            {
+                                eventMsgList.push_back(eventMsg);
+                                eventSeverityList.push_back(eventSeverity);
+                                eventErrLogPathList.push_back(eventErrLogPath);
+                            }
+                        }
+                    }
+
+                    // We have as many number of deconfigurations as there are
+                    // DIMMs
+                    if (eventMsgList.size() > 0)
+                    {
+                        if (!hwInventoryPath.has_value())
+                        {
+                            // already logged error. Continue
+                            continue;
+                        }
+                        auto errSeverityStr =
+                            sdbusplus::xyz::openbmc_project::Logging::server::
+                                convertForMessage(eventSeverityList[0]);
+
+                        // See which isolation record has higher priority and
+                        // use it.
+                        int index = getHigherPrecendenceEvent(eventMsgList);
+
+                        auto eventObjPath = createEvent(
+                            eventSeverityList[index], eventMsgList[index],
+                            hwInventoryPath->str, eventErrLogPathList[index]);
+
+                        if (!eventObjPath.has_value())
+                        {
+                            log<level::ERR>(
+                                std::format(
+                                    "Skipping to create the hardware "
+                                    "status event because unable to create "
+                                    "the event object for the given hardware "
+                                    "[{}]",
+                                    hwInventoryPath->str)
+                                    .c_str());
+                            error_log::createErrorLog(
+                                error_log::HwIsolationGenericErrMsg,
+                                error_log::Level::Informational,
+                                error_log::CollectTraces);
+                        }
+                    }
+                    continue;
+                }
                 event::EventMsg eventMsg;
                 event::EventSeverity eventSeverity;
                 record::entry::EntryErrLogPath eventErrLogPath;
                 std::optional<sdbusplus::message::object_path> hwInventoryPath;
                 bool create = false;
-                create = PopulateDetailsToCreateEvent(
+
+                create = populateDetailsToCreateEvent(
                     tgt, osRunning, eventMsg, eventSeverity, eventErrLogPath,
                     hwInventoryPath);
 
@@ -461,6 +549,36 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
             }
         }
     });
+}
+
+int Manager::getHigherPrecendenceEvent(
+    std::vector<event::EventMsg>& entryMsgList)
+{
+    // Check if the eventMsgList has only one element
+    if (entryMsgList.size() == 1)
+    {
+        // If there's only one element, return 0 the index of first element
+        return 0;
+    }
+    else
+    {
+        // Iterate through each keyword
+        for (const auto& deconfigType : deconfigTypes)
+        {
+            // Iterate through each element in the eventMsgList
+            for (unsigned int i = 0; i < entryMsgList.size(); ++i)
+            {
+                // Check if the current element is of higher precedence
+                if (entryMsgList[i].find(deconfigType))
+                {
+                    // If found, return the index
+                    return i;
+                }
+            }
+        }
+    }
+    // If none of the conditions are met, return 0 to use first index
+    return 0;
 }
 
 void Manager::clearHwStatusEventIfexists(const std::string& hwInventoryPath)

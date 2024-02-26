@@ -248,11 +248,19 @@ class Manager
      *       the hardware status event if any failures while
      *       processing all hardware.
      */
-    bool PopulateDetailsToCreateEvent(
+    bool populateDetailsToCreateEvent(
         pdbg_target* tgt, bool osRunning, event::EventMsg& eventMsg,
         event::EventSeverity& eventSeverity,
         record::entry::EntryErrLogPath& eventErrLogPath,
         std::optional<sdbusplus::message::object_path>& hwInventoryPath);
+
+    /**
+     * @brief This method identifies and returns the Event Message
+     *        that has the higher priority one
+     *
+     * @return int - index of the event that has the higher precedence
+     */
+    int getHigherPrecendenceEvent(std::vector<event::EventMsg>& eventMsgList);
 
     /**
      * @brief Helper API to restore hardware isolation status event from
