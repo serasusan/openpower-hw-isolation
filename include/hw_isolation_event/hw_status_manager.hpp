@@ -219,6 +219,50 @@ class Manager
     void restoreHardwaresStatusEvent(bool osRunning = false);
 
     /**
+     * @brief Used to populate the details needed to
+     *        create hardware status event for all hardware.
+     *
+     * @param[in] tgt - The pdbg target for which we are trying to find if
+     *                  we need to create a hw status event
+     *
+     * @param[in] osRunning - used to decide whether wants to restore
+     *                        cores events if the cores are deallocated
+     *                        at the runtime. By default, it won't restore.
+     *
+     * @param[out] eventMsg - Using this reference variable, we can return the
+     *                       event message that needs to be used while creating
+     * event
+     *
+     * @param[out] eventSeverity - Using this reference variable, we can return
+     * the priority that needs to be used while creating event
+     *
+     * @param[out] eventErrLogPath - Using this reference variable, we can
+     * return the log path that needs to be used while creating event
+     *
+     * @param[out] hwInventoryPath - Using this reference variable, we can
+     * return the Inventory path that needs to be used while creating event
+     *
+     * @return bool - Returns true if we need to create an event
+     *
+     * @note This function will skip to create
+     *       the hardware status event if any failures while
+     *       processing all hardware.
+     */
+    bool populateDetailsToCreateEvent(
+        pdbg_target* tgt, bool osRunning, event::EventMsg& eventMsg,
+        event::EventSeverity& eventSeverity,
+        record::entry::EntryErrLogPath& eventErrLogPath,
+        std::optional<sdbusplus::message::object_path>& hwInventoryPath);
+
+    /**
+     * @brief This method identifies and returns the Event Message
+     *        that has the higher priority one
+     *
+     * @return int - index of the event that has the higher precedence
+     */
+    int getHigherPrecendenceEvent(std::vector<event::EventMsg>& eventMsgList);
+
+    /**
      * @brief Helper API to restore hardware isolation status event from
      *        the persisted files.
      *

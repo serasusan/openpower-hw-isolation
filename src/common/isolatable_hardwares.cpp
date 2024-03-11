@@ -4,6 +4,8 @@
 
 #include "common/utils.hpp"
 
+#include <attributes_info.H>
+
 #include <phosphor-logging/elog-errors.hpp>
 
 #include <format>
@@ -462,7 +464,21 @@ std::optional<devtree::DevTreePhysPath> IsolatableHWs::getPhysicalPath(
 
                 if (canGetPhysPath)
                 {
-                    break;
+                    // In scenarios where multiple logical DIMMs are installed,
+                    // and the current DIMM is found to be absent, we must
+                    // proceed to deconfigure the remaining dimm. So check for
+                    // the current dimm's present status
+                    ATTR_HWAS_STATE_Type hwasState;
+                    if (!DT_GET_PROP(ATTR_HWAS_STATE, isolateHwTarget,
+                                     hwasState))
+                    {
+                        // If not present, continue to find the other dimm that
+                        // matches the location code
+                        if (hwasState.present)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
         }
