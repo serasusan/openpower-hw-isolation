@@ -207,9 +207,10 @@ std::optional<
     IsolatableHWs::getIsotableHWDetails(
         const IsolatableHWs::HW_Details::HwId& id) const
 {
-    auto it = std::find_if(
-        _isolatableHWsList.begin(), _isolatableHWsList.end(),
-        [&id](const auto& isolatableHw) { return isolatableHw.first == id; });
+    auto it = std::find_if(_isolatableHWsList.begin(), _isolatableHWsList.end(),
+                           [&id](const auto& isolatableHw) {
+        return isolatableHw.first == id;
+    });
 
     if (it != _isolatableHWsList.end())
     {
@@ -735,7 +736,7 @@ std::optional<sdbusplus::message::object_path>
             inventoryPathList->begin(), inventoryPathList->end(),
             [&fruInstId, &fruInvPathLookupFunc, this](const auto& path) {
             return fruInvPathLookupFunc(this->_bus, path, fruInstId);
-        });
+            });
 
         if (fruHwInvPath == inventoryPathList->end())
         {
@@ -1039,7 +1040,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                  this](const auto& path) {
                 return isolatedHwDetails->second._invPathFuncLookUp(
                     this->_bus, path, uniqIsolateHwKey);
-            });
+                });
 
             if (isolateHwPath == childsInventoryPath->end())
             {
