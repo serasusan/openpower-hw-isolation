@@ -257,6 +257,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             uint32_t plid = 0;
             bool deconfigured = false;
             bool guarded = false;
+            bool hidden = false;
             uint64_t timestamp = 0;
             std::string callouts;
             std::string refCode;
@@ -343,7 +344,15 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
                                 timestamp = *timestampPtr;
                             }
                         }
-                    }
+                        else if (prop == "Hidden")
+                        {
+                            auto hiddenPtr = std::get_if<bool>(&propValue);
+                            if (hiddenPtr != nullptr)
+                            {
+                                hidden = *hiddenPtr;
+                            }
+                        }
+		    }
                 }
             }
 
@@ -369,6 +378,11 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
             if (guarded == true)
             {
                 continue; // will be captured as part of guard records
+            }
+
+            if (hidden == true)
+            {
+                continue;
             }
 
             // power and thermal err src starts with 1100
