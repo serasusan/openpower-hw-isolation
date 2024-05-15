@@ -207,10 +207,9 @@ std::optional<
     IsolatableHWs::getIsotableHWDetails(
         const IsolatableHWs::HW_Details::HwId& id) const
 {
-    auto it = std::find_if(_isolatableHWsList.begin(), _isolatableHWsList.end(),
-                           [&id](const auto& isolatableHw) {
-        return isolatableHw.first == id;
-    });
+    auto it = std::find_if(
+        _isolatableHWsList.begin(), _isolatableHWsList.end(),
+        [&id](const auto& isolatableHw) { return isolatableHw.first == id; });
 
     if (it != _isolatableHWsList.end())
     {
@@ -637,7 +636,7 @@ std::optional<struct pdbg_target*>
          */
         if ((fruUnitPdbgClass == "adc") ||
             (fruUnitPdbgClass == "gpio_expander") ||
-            (fruUnitPdbgClass == "pmic"))
+            (fruUnitPdbgClass == "pmic") || (fruUnitPdbgClass == "mem_port"))
         {
             /**
              * The "adc", "gpio_expander", and "pmic" units are placed under
@@ -647,28 +646,12 @@ std::optional<struct pdbg_target*>
              */
             devTreeTgt = pdbg_target_parent("ocmb", devTreeTgt);
         }
-        /**
-         * Though ocmb has Location Code available now we need to use dimm
-         * location code in case of bonnell.
+        /** As ocmb has location code(which matches either dimm location code
+         *  or the planar based on the type of the system), returning ocmb
+         * target for "adc", "pmic",  "gpio_expander", "mem_port" to support all
+         * the systems.
          */
-        auto dimmCount = 0;
-        struct pdbg_target* lastDimmTgt = nullptr;
-        pdbg_for_each_target("dimm", devTreeTgt, lastDimmTgt)
-        {
-            parentFruTarget = lastDimmTgt;
-            ++dimmCount;
-        }
-
-        if (dimmCount == 0)
-        {
-            log<level::ERR>(
-                std::format("Failed to get the parent dimm target "
-                            "from phal cec device tree for the given phal cec "
-                            "device tree target [{}]",
-                            fruUnitDevTreePath)
-                    .c_str());
-            return std::nullopt;
-        }
+        return devTreeTgt;
     }
     else
     {
@@ -736,7 +719,7 @@ std::optional<sdbusplus::message::object_path>
             inventoryPathList->begin(), inventoryPathList->end(),
             [&fruInstId, &fruInvPathLookupFunc, this](const auto& path) {
             return fruInvPathLookupFunc(this->_bus, path, fruInstId);
-            });
+        });
 
         if (fruHwInvPath == inventoryPathList->end())
         {
@@ -1002,6 +985,58 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                 CommonInventoryItemIface)
             {
                 uniqIsolateHwKey = isolatedHwDetails->second._prettyName;
+                // Workaround for bonnell
+                if (isolatedHwId._pdbgClassName._name == "ocmb" ||
+                    isolatedHwId._pdbgClassName._name == "mem_port")
+                {
+                    std::string type;
+                    std::map<int, std::string> tarMap;
+                    /* Creating a map with FAPI_POS as key and Inventory Pretty
+                     Name Suffix as Value*/
+                    if (isolatedHwId._pdbgClassName._name == "ocmb")
+                    {
+                        type = "OpenCAPI Memory Buffer";
+                        tarMap = {{4, "2A"}, {5, "2B"}, {6, "3A"}, {7, "3B"}};
+                    }
+                    else
+                    {
+                        type = "DDR Memory Port";
+                        tarMap = {
+                            {8, "2A"}, {10, "2B"}, {12, "3A"}, {14, "3B"}};
+                    }
+                    const auto& vec = childsInventoryPath.value();
+                    int targetsWithSameLocCodeCount = 0;
+
+                    /*Getting the count of identical targets with same Location
+                    Code in Inventory. We will have only one target with same
+                    Location Code in case of rainier and everest. But On
+                    bonnell, we can have more than one identical target with
+                    same Location Code. Based on count, we will handle it
+                    differently for rainier,everest and bonnell*/
+                    for (const auto& path : vec)
+                    {
+                        auto retPrettyName =
+                            utils::getDBusPropertyVal<std::string>(
+                                this->_bus, path.str,
+                                "xyz.openbmc_project.Inventory.Item",
+                                "PrettyName");
+                        if (retPrettyName.find(type) != std::string::npos)
+                            targetsWithSameLocCodeCount += 1;
+                        if (targetsWithSameLocCodeCount > 1)
+                            break;
+                    }
+                    ATTR_FAPI_POS_Type fapi;
+                    // Mapping to correct PrettyName using FAPI_POS of the
+                    // target
+                    if (targetsWithSameLocCodeCount > 1 &&
+                        !DT_GET_PROP(ATTR_FAPI_POS, isolatedHwTgt.value(),
+                                     fapi))
+                    {
+                        uniqIsolateHwKey =
+                            isolatedHwDetails->second._prettyName + " " +
+                            tarMap[fapi];
+                    }
+                }
             }
             else
             {
@@ -1040,7 +1075,7 @@ std::optional<sdbusplus::message::object_path> IsolatableHWs::getInventoryPath(
                  this](const auto& path) {
                 return isolatedHwDetails->second._invPathFuncLookUp(
                     this->_bus, path, uniqIsolateHwKey);
-                });
+            });
 
             if (isolateHwPath == childsInventoryPath->end())
             {
