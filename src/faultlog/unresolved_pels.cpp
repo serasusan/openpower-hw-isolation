@@ -89,6 +89,7 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
                 "xyz.openbmc_project.Logging.Entry.Level.Informational";
             bool deconfigured = false;
             bool guarded = false;
+            bool hidden = false;
             std::string refCode;
             uint64_t timestamp = 0;
             for (const auto& [intf, properties] : interfaces)
@@ -140,6 +141,14 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
                                 deconfigured = *deconfigPtr;
                             }
                         }
+                        else if (prop == "Hidden")
+                        {
+                            auto hiddenPtr = std::get_if<bool>(&propValue);
+                            if (hiddenPtr != nullptr)
+                            {
+                                hidden = *hiddenPtr;
+                            }
+                        }
                         else if (prop == "Guard")
                         {
                             auto guardPtr = std::get_if<bool>(&propValue);
@@ -176,6 +185,11 @@ int UnresolvedPELs::getCount(sdbusplus::bus::bus& bus, bool ignorePwrFanPel)
             }
 
             if (deconfigured == false)
+            {
+                continue;
+            }
+
+            if (hidden == true)
             {
                 continue;
             }
@@ -352,7 +366,7 @@ void UnresolvedPELs::populate(sdbusplus::bus::bus& bus,
                                 hidden = *hiddenPtr;
                             }
                         }
-		    }
+                    }
                 }
             }
 
