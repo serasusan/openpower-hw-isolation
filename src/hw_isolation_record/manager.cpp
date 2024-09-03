@@ -453,7 +453,7 @@ void Manager::deleteAll()
     // throws exception if not allowed
     hw_isolation::utils::isHwDeisolationAllowed(_bus);
 
-    resolveAllEntries();
+    openpower_guard::clearAll();
 }
 
 bool Manager::isValidRecord(const entry::EntryRecordId recordId)

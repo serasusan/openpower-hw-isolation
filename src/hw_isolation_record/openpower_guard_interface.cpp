@@ -76,6 +76,11 @@ void clear(const uint32_t recordId)
     CALL_LIBGUARD_INTERFACE(libguard::clear(recordId);)
 }
 
+void clearAll()
+{
+    CALL_LIBGUARD_INTERFACE(libguard::invalidateAll();)
+}
+
 GuardRecords getAll(bool persistentTypeOnly)
 {
     GuardRecords records;

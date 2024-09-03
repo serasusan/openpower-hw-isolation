@@ -46,6 +46,15 @@ std::optional<GuardRecord> create(const EntityPath& entityPath,
 void clear(const uint32_t recordId);
 
 /**
+ * @brief Wrapper function for libguard::invalidateAll to delete all guard
+ * records
+ *
+ * @return NULL on success
+ *         Throw exception on failure
+ */
+void clearAll();
+
+/**
  * @brief Wrapper function for libguard::getAll to get all guard records
  *
  * @param[in] persistentTypeOnly - Used to decide whether wants to get all
