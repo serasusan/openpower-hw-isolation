@@ -425,7 +425,7 @@ void Manager::eraseEntry(const entry::EntryRecordId entryRecordId)
     _isolatedHardwares.erase(entryRecordId);
 }
 
-void Manager::resolveAllEntries(bool clearRecord)
+void Manager::clearDbusEntries()
 {
     auto entryIt = _isolatedHardwares.begin();
     while (entryIt != _isolatedHardwares.end())
@@ -437,7 +437,7 @@ void Manager::resolveAllEntries(bool clearRecord)
         // Continue other entries to delete if failed to delete one entry
         try
         {
-            entry->resolveEntry(clearRecord);
+            entry->resolveEntry(false);
         }
         catch (std::exception& e)
         {
@@ -798,7 +798,7 @@ void Manager::handleHostIsolatedHardwares()
     if ((records.size() == 0) && _isolatedHardwares.size() > 0)
     {
         // Clean up all entries association before delete.
-        resolveAllEntries(false);
+        clearDbusEntries();
         _isolatedHardwares.clear();
         return;
     }

@@ -109,7 +109,7 @@ class Manager :
     void eraseEntry(const entry::EntryRecordId entryRecordId);
 
     /**
-     * @brief Delete all isolated hardware entires
+     * @brief Delete all isolated hardware entires except cores
      *
      * @return NULL
      */
@@ -363,17 +363,14 @@ class Manager :
     void handleHostIsolatedHardwares();
 
     /**
-     * @brief Resolve all entries.
+     * @brief clear all dbus entries.
      *
-     * @param[in] clearRecord - use to decide whether want to clear
-     *                          record from their preserved file.
-     *                          By default, it will clear record.
      * @return NULL
      *
-     * @note This function just resolve the entries, won't check
-     *       whether resolve operation is allowed or not like "deleteAll()".
+     * @note This function just removes the dbus entries, Use deleteAll() to
+     * resolve guard records.
      */
-    void resolveAllEntries(bool clearRecord = true);
+    void clearDbusEntries();
 
     /**
      * @brief Helper API to check whether hardware isolation record
