@@ -213,7 +213,7 @@ std::pair<bool, sdbusplus::message::object_path> Manager::updateEntry(
                      [recordId, entityPath](const auto& isolatedHw) {
         return ((isolatedHw.second->getEntityPath() == entityPath) &&
                 (isolatedHw.second->getEntryRecId() == recordId));
-        });
+    });
 
     if (isolatedHwIt == _isolatedHardwares.end())
     {
@@ -679,10 +679,10 @@ void Manager::cleanupPersistedEcoCores()
 
             auto isNotIsolated = std::ranges::none_of(
                 _isolatedHardwares, [ecoCore](const auto& entry) {
-                    return (entry.second->getEntityPath() ==
-                            openpower_guard::EntityPath(ecoCore->data(),
-                                                        ecoCore->size()));
-                });
+                return (entry.second->getEntityPath() ==
+                        openpower_guard::EntityPath(ecoCore->data(),
+                                                    ecoCore->size()));
+            });
 
             if (isNotIsolated)
             {
@@ -844,9 +844,9 @@ void Manager::handleHostIsolatedHardwares()
                 std::stringstream ss;
                 std::for_each(entityPathRawData.begin(),
                               entityPathRawData.end(), [&ss](const auto& ele) {
-                                  ss << std::setw(2) << std::setfill('0')
-                                     << std::hex << (int)ele << " ";
-                              });
+                    ss << std::setw(2) << std::setfill('0') << std::hex
+                       << (int)ele << " ";
+                });
                 log<level::ERR>(std::format("More than one valid records exist "
                                             "for the same hardware [{}]",
                                             ss.str())
