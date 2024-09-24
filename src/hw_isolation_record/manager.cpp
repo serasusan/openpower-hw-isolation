@@ -213,7 +213,7 @@ std::pair<bool, sdbusplus::message::object_path> Manager::updateEntry(
                      [recordId, entityPath](const auto& isolatedHw) {
         return ((isolatedHw.second->getEntityPath() == entityPath) &&
                 (isolatedHw.second->getEntryRecId() == recordId));
-        });
+    });
 
     if (isolatedHwIt == _isolatedHardwares.end())
     {
@@ -425,7 +425,7 @@ void Manager::eraseEntry(const entry::EntryRecordId entryRecordId)
     _isolatedHardwares.erase(entryRecordId);
 }
 
-void Manager::resolveAllEntries(bool clearRecord)
+void Manager::clearDbusEntries()
 {
     auto entryIt = _isolatedHardwares.begin();
     while (entryIt != _isolatedHardwares.end())
@@ -437,7 +437,7 @@ void Manager::resolveAllEntries(bool clearRecord)
         // Continue other entries to delete if failed to delete one entry
         try
         {
-            entry->resolveEntry(clearRecord);
+            entry->resolveEntry(false);
         }
         catch (std::exception& e)
         {
@@ -453,7 +453,7 @@ void Manager::deleteAll()
     // throws exception if not allowed
     hw_isolation::utils::isHwDeisolationAllowed(_bus);
 
-    resolveAllEntries();
+    openpower_guard::clearAll();
 }
 
 bool Manager::isValidRecord(const entry::EntryRecordId recordId)
@@ -679,10 +679,10 @@ void Manager::cleanupPersistedEcoCores()
 
             auto isNotIsolated = std::ranges::none_of(
                 _isolatedHardwares, [ecoCore](const auto& entry) {
-                    return (entry.second->getEntityPath() ==
-                            openpower_guard::EntityPath(ecoCore->data(),
-                                                        ecoCore->size()));
-                });
+                return (entry.second->getEntityPath() ==
+                        openpower_guard::EntityPath(ecoCore->data(),
+                                                    ecoCore->size()));
+            });
 
             if (isNotIsolated)
             {
@@ -798,7 +798,7 @@ void Manager::handleHostIsolatedHardwares()
     if ((records.size() == 0) && _isolatedHardwares.size() > 0)
     {
         // Clean up all entries association before delete.
-        resolveAllEntries(false);
+        clearDbusEntries();
         _isolatedHardwares.clear();
         return;
     }
@@ -844,9 +844,9 @@ void Manager::handleHostIsolatedHardwares()
                 std::stringstream ss;
                 std::for_each(entityPathRawData.begin(),
                               entityPathRawData.end(), [&ss](const auto& ele) {
-                                  ss << std::setw(2) << std::setfill('0')
-                                     << std::hex << (int)ele << " ";
-                              });
+                    ss << std::setw(2) << std::setfill('0') << std::hex
+                       << (int)ele << " ";
+                });
                 log<level::ERR>(std::format("More than one valid records exist "
                                             "for the same hardware [{}]",
                                             ss.str())
