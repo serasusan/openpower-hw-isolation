@@ -188,6 +188,9 @@ std::optional<EntrySeverity>
         case openpower_guard::GardType::GARD_Predictive:
             return EntrySeverity::Warning;
 
+        case openpower_guard::GardType::GARD_Spare:
+            return EntrySeverity::Spare;
+
         default:
             log<level::ERR>(
                 std::format(
@@ -212,6 +215,8 @@ std::optional<openpower_guard::GardType>
             return openpower_guard::GardType::GARD_User_Manual;
         case EntrySeverity::Warning:
             return openpower_guard::GardType::GARD_Predictive;
+        case EntrySeverity::Spare:
+            return openpower_guard::GardType::GARD_Spare;
 
         default:
             log<level::ERR>(

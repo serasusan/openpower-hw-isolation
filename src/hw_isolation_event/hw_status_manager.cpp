@@ -51,7 +51,8 @@ constexpr auto HOST_STATE_OBJ_PATH = "/xyz/openbmc_project/state/host0";
 // Define a vector containing Deconfiguration Type in the following
 // precedence
 std::vector<event::EventMsg> deconfigTypes = {"Fatal", "Predictive",
-                                              "By Association", "Manual"};
+                                              "By Association", "Manual",
+                                              "Spare core"};
 
 Manager::Manager(sdbusplus::bus::bus& bus, const sdeventplus::Event& eventLoop,
                  record::Manager& hwIsolationRecordMgr) :
@@ -169,6 +170,8 @@ std::pair<event::EventMsg, event::EventSeverity>
             return std::make_pair("Predictive", event::EventSeverity::Warning);
         case record::entry::EntrySeverity::Manual:
             return std::make_pair("Manual", event::EventSeverity::Ok);
+        case record::entry::EntrySeverity::Spare:
+            return std::make_pair("Spare", event::EventSeverity::Ok);
         default:
             log<level::ERR>(
                 std::format(
