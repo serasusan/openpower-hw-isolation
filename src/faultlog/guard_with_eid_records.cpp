@@ -77,6 +77,15 @@ int GuardWithEidRecords::getCount(sdbusplus::bus::bus& bus,
         {
             continue;
         }
+
+        // Ignore notifying caller by not updating the count if gard record
+        // is of type spare. Do collect gard record details though in JSON file.
+        if (elem.errType ==
+            static_cast<uint8_t>(openpower::guard::GardType::GARD_Spare))
+        {
+            continue;
+        }
+
         auto physicalPath = openpower::guard::getPhysicalPath(elem.targetId);
         if (!physicalPath.has_value())
         {
@@ -312,7 +321,7 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
                 json sectionJson = json::object();
 
                 // getLocationCode checks if attr is present in target else
-                // gets it from partent target
+                // gets it from parent target
                 ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
                 openpower::phal::pdbg::getLocationCode(guardedTarget.target,
                                                        attrLocCode);
