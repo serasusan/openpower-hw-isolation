@@ -4,8 +4,8 @@
 #include <sdbusplus/exception.hpp>
 #include <util.hpp>
 
+#include <regex>
 #include <sstream>
-
 namespace openpower::faultlog
 {
 
@@ -100,60 +100,52 @@ json parseCallout(const std::string callout)
     {
         return json::object();
     }
+    std::istringstream stream(callout);
+    std::string line;
 
-    // lambda method to split the string based on delimiter
-    auto splitString = [](const std::string& str, char delimiter) {
-        std::vector<std::string> tokens;
-        std::stringstream ss(str);
-        std::string token;
+    // Regular expression to capture key-value pairs (ignores the starting
+    // number)
+    // Example 
+    // 1. LocationCode:xxxx, CCIN:XXX, SN:xxxx, PN:xxxx, Priority:xxx
+    // 2. PN:xxxx, Priority:xxx
+    std::regex pattern(
+        R"((Location Code|Priority|PN|SN|CCIN):\s*([A-Za-z0-9.-]+))");
 
-        while (std::getline(ss, token, delimiter))
-        {
-            tokens.push_back(token);
-        }
-
-        return tokens;
-    };
-
-    std::vector<std::string> lines = splitString(callout, '\n');
+    int lineCount = 0;
     json calloutsJson = json::array();
-
-    for (const auto& line : lines)
+    // Read each line and parse it directly into a JSON object
+    while (std::getline(stream, line))
     {
-        std::vector<std::string> tokens = splitString(line, ',');
-        json calloutJson = json::object();
+        if (!line.empty())
+        { // Ignore empty lines
+            lineCount += 1;
+            json jsonObject; // JSON object to hold key-value pairs
+            std::smatch matches;
+            std::string::const_iterator searchStart(line.cbegin());
 
-        for (const auto& token : tokens)
-        {
-            std::size_t colonPos = token.find(':');
-
-            if (colonPos != std::string::npos)
+            // Use regex to find all key-value pairs in the current line
+            while (
+                std::regex_search(searchStart, line.cend(), matches, pattern))
             {
-                std::string key = token.substr(0, colonPos);
-                key.erase(0, key.find_first_not_of(' '));
-                key.erase(key.find_last_not_of(' ') + 1);
-                std::string value = token.substr(colonPos + 1);
-                value.erase(0, value.find_first_not_of(' '));
-                value.erase(value.find_last_not_of(' ') + 1);
-                if (key.find("Location Code") != std::string::npos)
-                {
-                    key = "Location Code";
-                }
-                else if (key.find("SN") != std::string::npos)
+                std::string key = matches[1].str();
+                if (key == "SN")
                 {
                     key = "Serial Number";
                 }
-                else if (key.find("PN") != std::string::npos)
+                else if (key == "PN")
                 {
                     key = "Part Number";
                 }
-                calloutJson[key] = value;
+                jsonObject[key] =
+                    matches[2].str(); // Assign key-value pairs to JSON object
+                searchStart = matches.suffix().first; // Move to the next match
             }
+            calloutsJson.push_back(
+                jsonObject); // Add the JSON object to the array
         }
-        calloutsJson.push_back(calloutJson);
     }
     json sectionJson = json::object();
-    sectionJson["Callout Count"] = lines.size();
+    sectionJson["Callout Count"] = lineCount;
     sectionJson["Callouts"] = calloutsJson;
     return sectionJson;
 }
