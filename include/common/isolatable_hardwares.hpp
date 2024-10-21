@@ -190,8 +190,7 @@ class IsolatableHWs
             devtree::lookup_func::LookupFuncForPhysPath physPathFuncLookUp,
             inv_path_lookup_func::LookupFuncForInvPath invPathFuncLookUp,
             const std::string& prettyName) :
-            _isItFRU(isItFRU),
-            _parentFruHwId(parentFruHwId),
+            _isItFRU(isItFRU), _parentFruHwId(parentFruHwId),
             _physPathFuncLookUp(physPathFuncLookUp),
             _invPathFuncLookUp(invPathFuncLookUp), _prettyName(prettyName)
         {}

@@ -1028,9 +1028,8 @@ int Manager::getHigherPrecendenceEntry(
         // Define a vector containing Deconfiguration Type in the following
         // precedence
         std::vector<entry::EntrySeverity> deconfigTypes = {
-            entry::EntrySeverity::Spare, entry::EntrySeverity::Critical, 
-            entry::EntrySeverity::Warning,
-            entry::EntrySeverity::Manual};
+            entry::EntrySeverity::Spare, entry::EntrySeverity::Critical,
+            entry::EntrySeverity::Warning, entry::EntrySeverity::Manual};
 
         // Iterate through each keyword
         for (const auto& deconfigType : deconfigTypes)

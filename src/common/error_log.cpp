@@ -22,8 +22,7 @@ using namespace phosphor::logging;
 
 FFDCFile::FFDCFile(const FFDCFormat& format, const FFDCSubType& subType,
                    const FFDCVersion& version, const std::string& data) :
-    _format(format),
-    _subType(subType), _version(version),
+    _format(format), _subType(subType), _version(version),
     _fileName("/tmp/hwIsolationFFDCFile.XXXXXX"), _fd(-1), _data(data)
 {
     prepareFFDCFile();
