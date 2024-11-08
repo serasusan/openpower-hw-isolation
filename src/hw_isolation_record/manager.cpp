@@ -35,8 +35,8 @@ constexpr auto HW_ISOLATION_ENTRY_MGR_PERSIST_PATH =
 
 Manager::Manager(sdbusplus::bus::bus& bus, const std::string& objPath,
                  const sdeventplus::Event& eventLoop) :
-    type::ServerObject<CreateInterface, OP_CreateInterface, DeleteAllInterface>(
-        bus, objPath.c_str()),
+    type::ServerObject<CreateInterface, DeleteAllInterface>(bus,
+                                                            objPath.c_str()),
     _bus(bus), _eventLoop(eventLoop), _isolatableHWs(bus),
     _guardFileWatch(
         eventLoop.get(), IN_NONBLOCK, IN_CLOSE_WRITE, EPOLLIN,
@@ -874,76 +874,6 @@ void Manager::handleHostIsolatedHardwares()
     cleanupPersistedEcoCores();
 }
 
-sdbusplus::message::object_path Manager::createWithEntityPath(
-    std::vector<uint8_t> entityPath,
-    sdbusplus::xyz::openbmc_project::HardwareIsolation::server::Entry::Type
-        severity,
-    sdbusplus::message::object_path bmcErrorLog)
-{
-    isHwIsolationAllowed(severity);
-
-    bool ecoCore{false};
-
-    auto isolateHwInventoryPath = _isolatableHWs.getInventoryPath(entityPath,
-                                                                  ecoCore);
-
-    std::stringstream ss;
-    std::for_each(entityPath.begin(), entityPath.end(), [&ss](const auto& ele) {
-        ss << std::setw(2) << std::setfill('0') << std::hex << (int)ele << " ";
-    });
-    if (!isolateHwInventoryPath.has_value())
-    {
-        log<level::ERR>(
-            std::format("Invalid argument [IsolateHardware: {}]", ss.str())
-                .c_str());
-        throw type::CommonError::InvalidArgument();
-    }
-    updateEcoCoresList(ecoCore, entityPath);
-
-    auto eId = getEID(bmcErrorLog);
-    if (!eId.has_value())
-    {
-        log<level::ERR>(
-            std::format("Invalid argument [BmcErrorLog: {}]", bmcErrorLog.str)
-                .c_str());
-        throw type::CommonError::InvalidArgument();
-    }
-
-    auto guardType = entry::utils::getGuardType(severity);
-    if (!guardType.has_value())
-    {
-        log<level::ERR>(
-            std::format("Invalid argument [Severity: {}]",
-                        entry::EntryInterface::convertTypeToString(severity))
-                .c_str());
-        throw type::CommonError::InvalidArgument();
-    }
-
-    auto guardRecord = openpower_guard::create(
-        openpower_guard::EntityPath(entityPath.data(), entityPath.size()), *eId,
-        *guardType);
-
-    if (auto ret = updateEntry(guardRecord->recordId, severity,
-                               isolateHwInventoryPath->str, bmcErrorLog.str,
-                               guardRecord->targetId);
-        ret.first == true)
-    {
-        return ret.second;
-    }
-    else
-    {
-        auto entryPath = createEntry(
-            guardRecord->recordId, false, severity, isolateHwInventoryPath->str,
-            bmcErrorLog.str, true, guardRecord->targetId);
-
-        if (!entryPath.has_value())
-        {
-            throw type::CommonError::InternalFailure();
-        }
-        return *entryPath;
-    }
-}
-
 std::optional<std::tuple<entry::EntrySeverity, entry::EntryErrLogPath>>
     Manager::getIsolatedHwRecordInfo(
         const sdbusplus::message::object_path& hwInventoryPath)
@@ -1028,9 +958,8 @@ int Manager::getHigherPrecendenceEntry(
         // Define a vector containing Deconfiguration Type in the following
         // precedence
         std::vector<entry::EntrySeverity> deconfigTypes = {
-            entry::EntrySeverity::Spare, entry::EntrySeverity::Critical, 
-            entry::EntrySeverity::Warning,
-            entry::EntrySeverity::Manual};
+            entry::EntrySeverity::Spare, entry::EntrySeverity::Critical,
+            entry::EntrySeverity::Warning, entry::EntrySeverity::Manual};
 
         // Iterate through each keyword
         for (const auto& deconfigType : deconfigTypes)

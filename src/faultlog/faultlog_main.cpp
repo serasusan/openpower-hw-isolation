@@ -242,7 +242,7 @@ int main(int argc, char** argv)
         }
         catch (const std::exception& ex)
         {
-             lg2::info("failed to get system type ");
+            lg2::info("failed to get system type ");
         }
         nlohmann::json system;
         system["SYSTEM_TYPE"] = propVal;

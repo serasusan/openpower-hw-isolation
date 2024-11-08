@@ -7,7 +7,6 @@
 #include "common/watch.hpp"
 #include "hw_isolation_record/entry.hpp"
 #include "hw_isolation_record/openpower_guard_interface.hpp"
-#include "org/open_power/HardwareIsolation/Create/server.hpp"
 #include "xyz/openbmc_project/Collection/DeleteAll/server.hpp"
 #include "xyz/openbmc_project/HardwareIsolation/Create/server.hpp"
 
@@ -24,8 +23,6 @@ namespace record
 
 using CreateInterface =
     sdbusplus::xyz::openbmc_project::HardwareIsolation::server::Create;
-using OP_CreateInterface =
-    sdbusplus::org::open_power::HardwareIsolation::server::Create;
 
 using IsolatedHardwares =
     std::map<entry::EntryRecordId, std::unique_ptr<entry::Entry>>;
@@ -45,9 +42,7 @@ using EcoCores = std::set<devtree::DevTreePhysPath>;
  *           xyz.openbmc_project.Collection.DeleteAll
  *           org.open_power.HardwareIsolation.Create
  */
-class Manager :
-    public type::ServerObject<CreateInterface, OP_CreateInterface,
-                              DeleteAllInterface>
+class Manager : public type::ServerObject<CreateInterface, DeleteAllInterface>
 {
   public:
     Manager() = delete;
@@ -130,24 +125,6 @@ class Manager :
      * @return NULL
      */
     void processHardwareIsolationRecordFile();
-
-    /**
-     * @brief Implementation for CreateWithEntityPath
-     *
-     * @param[in] entityPath - The hardware entity path which is needs
-     *                         to isolate
-     * @param[in] severity - The severity of isolating hardware.
-     * @param[in] bmcErrorLog - The BMC error log caused the isolation of
-     *                          hardware.
-     *
-     * @return path The path of created
-     *              xyz.openbmc_project.HardwareIsolation.Entry object.
-     */
-    sdbusplus::message::object_path createWithEntityPath(
-        std::vector<uint8_t> entityPath,
-        sdbusplus::xyz::openbmc_project::HardwareIsolation::server::Entry::Type
-            severity,
-        sdbusplus::message::object_path bmcErrorLog) override;
 
     /**
      * @brief Used to the isolated hardware entry information.
