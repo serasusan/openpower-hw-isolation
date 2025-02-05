@@ -348,6 +348,13 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             }
             jsonResource["CURRENT_STATE"] = std::move(state);
 
+            // getLocationCode checks if attr is present in target else
+            // gets it from partent target
+            ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
+            openpower::phal::pdbg::getLocationCode(guardedTarget.target,
+                                                   attrLocCode);
+            jsonResource["LOCATION_CODE"] = attrLocCode;
+
             jsonResource["REASON_DESCRIPTION"] = getGuardReason(guardRecords,
                                                                 *physicalPath);
 
