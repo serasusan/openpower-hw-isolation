@@ -32,7 +32,6 @@ using ::openpower::guard::GuardRecords;
 using Timer = sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic>;
 
 #define GUARD_RESOLVED 0xFFFFFFFF
-
 using Severity = sdbusplus::xyz::openbmc_project::Logging::server::Entry::Level;
 
 using Binary = std::vector<uint8_t>;
