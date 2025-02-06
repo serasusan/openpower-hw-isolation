@@ -377,26 +377,7 @@ void Manager::restoreHardwaresStatusEvent(bool osRunning)
                                 eventMsg = "Error";
                                 eventSeverity = event::EventSeverity::Critical;
 
-                                auto logObjPath =
-                                    utils::getBMCLogPath(_bus, eId);
-                                if (!logObjPath.has_value())
-                                {
-                                    log<level::ERR>(
-                                        fmt::format(
-                                            "Skipping to create the hardware "
-                                            "status event because unable to "
-                                            "find the bmc error log object "
-                                            "path for the given "
-                                            "deconfiguration EID [{}] which "
-                                            "isolated the hardware [{}]",
-                                            eId, hwInventoryPath->str)
-                                            .c_str());
-                                    error_log::createErrorLog(
-                                        error_log::HwIsolationGenericErrMsg,
-                                        error_log::Level::Informational,
-                                        error_log::CollectTraces);
-                                    continue;
-                                }
+                                auto logObjPath = utils::getBMCLogPath(_bus, eId, true);
                                 eventErrLogPath = logObjPath->str;
                             }
                             else
