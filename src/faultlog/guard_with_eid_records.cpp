@@ -343,7 +343,18 @@ void GuardWithEidRecords::populate(sdbusplus::bus::bus& bus,
             jsonResource["REASON_DESCRIPTION"] =
                 getGuardReason(guardRecords, *physicalPath);
 
+            // getLocationCode checks if attr is present in target else
+            // gets it from partent target
+            ATTR_LOCATION_CODE_Type attrLocCode = {'\0'};
+            openpower::phal::pdbg::getLocationCode(guardedTarget.target,
+                                                   attrLocCode);
+            jsonResource["LOCATION_CODE"] = attrLocCode;
             jsonResource["GUARD_RECORD"] = true;
+            ATTR_PHYS_DEV_PATH_Type phyPath;
+            if (!DT_GET_PROP(ATTR_PHYS_DEV_PATH, guardedTarget.target, phyPath))
+            {
+                jsonResource["PHYS_PATH"] = phyPath;
+            }
 
             // An error could create single PEL but multiple guard records,
             // while processing guard records do not create multiple error log
