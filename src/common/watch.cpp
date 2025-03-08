@@ -33,17 +33,7 @@ Watch::Watch(const sd_event* eventObj, const int inotifyFlagsToWatch,
         throw type::CommonError::InvalidArgument();
     }
 
-    _watchDescriptor = inotify_add_watch(
-        _watchFileDescriptor(), _fileToWatch.c_str(), eventMasksToWatch);
-    if (_watchDescriptor == -1)
-    {
-        log<level::ERR>(
-            std::format("inotify_add_watch call failed with ErrNo[{}] "
-                        "ErrMsg[{}]",
-                        errno, strerror(errno))
-                .c_str());
-        throw type::CommonError::InternalFailure();
-    }
+    addWatch();
 
     auto rc = sd_event_add_io(const_cast<sd_event*>(eventObj), nullptr,
                               _watchFileDescriptor(), _eventsToWatch,
@@ -62,9 +52,36 @@ Watch::Watch(const sd_event* eventObj, const int inotifyFlagsToWatch,
 
 Watch::~Watch()
 {
+    removeWatch();
+}
+
+void Watch::removeWatch()
+{
     if ((_watchFileDescriptor() >= 0) && (_watchDescriptor >= 0))
     {
-        inotify_rm_watch(_watchFileDescriptor(), _watchDescriptor);
+        if (inotify_rm_watch(_watchFileDescriptor(), _watchDescriptor) == -1) 
+        {
+            log<level::ERR>(
+                std::format("inotify_rm_watch call failed with ErrNo[{}] "
+                            "ErrMsg[{}]",
+                            errno, strerror(errno))
+                    .c_str());
+        }
+    }
+}
+
+void Watch::addWatch()
+{
+    _watchDescriptor = inotify_add_watch(
+        _watchFileDescriptor(), _fileToWatch.c_str(), _eventMasksToWatch);
+    if (_watchDescriptor == -1)
+    {
+        log<level::ERR>(
+            std::format("inotify_add_watch call failed with ErrNo[{}] "
+                        "ErrMsg[{}]",
+                        errno, strerror(errno))
+                .c_str());
+        throw std::runtime_error("Failed to add watch");
     }
 }
 

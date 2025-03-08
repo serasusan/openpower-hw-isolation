@@ -86,6 +86,16 @@ class Watch
     /* @brief Remove inotify watch and close fd's */
     ~Watch();
 
+    /** @brief removes the watch on all files and events
+     *  throws exception in case of failure
+     */
+    void removeWatch();
+
+    /** @brief add the watch on all files and events that was removed with removeWatch
+     *  throws exception in case of failure
+     */
+    void addWatch();
+
   private:
     /** @brief inotify flags */
     int _inotifyFlagsToWatch;

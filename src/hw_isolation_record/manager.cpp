@@ -6,6 +6,7 @@
 
 #include "common/common_types.hpp"
 #include "common/utils.hpp"
+#include "common/error_log.hpp"
 
 #include <cereal/archives/binary.hpp>
 #include <phosphor-logging/elog-errors.hpp>
@@ -450,10 +451,34 @@ void Manager::clearDbusEntries()
 
 void Manager::deleteAll()
 {
-    // throws exception if not allowed
+    // When deleteall is invoked, the core records are not cleared.
+    // So the gui should immediately reflect the records that are cleared.
+    // Instead of waiting for guard file update, immediately refesh the dbus entries
+    // with the number of records in the guard file
     hw_isolation::utils::isHwDeisolationAllowed(_bus);
-
-    openpower_guard::clearAll();
+    try
+    {
+        // remove the watch, as clearall is allowed only when the host is powered off
+        // as we dont want inotify signals to come again
+        _guardFileWatch.removeWatch();
+        openpower_guard::clearAll();
+        handleHostIsolatedHardwares();
+        _guardFileWatch.addWatch();
+    }
+    //If there is any error in adding/ removing watch runtime_error will be generated
+    //Create a PEL during that scenario  
+    catch (const std::runtime_error& e) 
+    {
+        //create error pel and then throw the exception
+        error_log::createErrorLog(error_log::HwIsolationGenericErrMsg,
+            error_log::Level::Warning,
+            error_log::CollectTraces);
+        throw;
+    }
+    catch (...) 
+    {
+        log<level::ERR>("Unknown exception caught while ClearAll of dbus entries");
+    }
 }
 
 bool Manager::isValidRecord(const entry::EntryRecordId recordId)
@@ -753,11 +778,14 @@ void Manager::processHardwareIsolationRecordFile()
 
 void Manager::handleHostIsolatedHardwares()
 {
-    auto timerObj = std::move(_timerObjs.front());
-    _timerObjs.pop();
-    if (timerObj->isEnabled())
+    if (!_timerObjs.empty())
     {
-        timerObj->setEnabled(false);
+        auto timerObj = std::move(_timerObjs.front());
+        _timerObjs.pop();
+        if (timerObj->isEnabled())
+        {
+            timerObj->setEnabled(false);
+        }
     }
 
     // Don't get ephemeral records (GARD_Reconfig and GARD_Sticky_deconfig
