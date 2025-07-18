@@ -105,14 +105,6 @@ void Entry::delete_()
 
     // throws exception if the user tried deisolate the system
     // isolated hardware entry
-    if (severity() != EntrySeverity::Manual)
-    {
-        log<level::ERR>(std::format("User is not allowed to clear the system "
-                                    "isolated hardware entry")
-                            .c_str());
-        throw type::CommonError::InsufficientPermission();
-    }
-
     resolveEntry();
 }
 
