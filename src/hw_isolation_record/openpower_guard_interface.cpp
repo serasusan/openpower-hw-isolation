@@ -59,6 +59,10 @@ namespace HardwareIsolationError =
     catch (libguard::exception::GuardFileOverFlowed & e)                       \
     {                                                                          \
         throw type::CommonError::TooManyResources();                           \
+    }                                                                          \
+    catch (libguard::exception::CannotDelete & e)                              \
+    {                                                                          \
+        throw type::CommonError::InsufficientPermission();                     \
     }
 
 std::optional<GuardRecord> create(const EntityPath& entityPath,
