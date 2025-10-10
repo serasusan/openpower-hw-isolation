@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
         std::cerr << "Please enter a valid severity" << std::endl;
       }
     } else {
-      *sev = "predictive";
+      sev = "predictive";
     }
     std::cerr << "Creating System guard of type " << *sev
               << " on the target with physical path " << phyDevPath
